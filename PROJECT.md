@@ -2,6 +2,9 @@
 
 An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (PostgreSQL)** for tracking accounts, credit card dues, and net available liquid money with custom account exclusion support.
 
+🌐 **Live Production API**: [https://expensify-api-fj8q.onrender.com/docs](https://expensify-api-fj8q.onrender.com/docs)  
+📦 **GitHub Repository**: [https://github.com/ship-it-mathus/expensify](https://github.com/ship-it-mathus/expensify)
+
 ---
 
 ## 🎯 Vision & Core Features
@@ -25,7 +28,9 @@ An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (Pos
 | **Database** | Supabase (PostgreSQL) | Managed Cloud Relational Database |
 | **ORM** | SQLAlchemy | Python SQL Toolkit and Object Relational Mapper |
 | **Validation** | Pydantic v2 | Data validation and settings management |
+| **Testing** | Pytest & HTTPX | 100% test coverage with in-memory SQLite isolation |
 | **Container** | Docker | Lightweight Python 3.11-slim container |
+| **Hosting** | Render | Automated CI/CD web service deployment |
 
 ### 📂 Directory Structure
 
@@ -41,6 +46,11 @@ Expensify/
 │   └── routers/
 │       ├── __init__.py
 │       └── accounts.py  # Endpoints for CRUD ops & net worth calculation
+├── tests/               # Automated test suite (99-100% coverage)
+│   ├── conftest.py      # Pytest fixtures & in-memory DB override
+│   ├── test_accounts.py # Account CRUD & net worth math tests
+│   ├── test_database.py # Database session lifecycle test
+│   └── test_main.py     # Root route health check test
 ├── .env                 # Environment variables (Database URL)
 ├── .gitignore           # Ignored files (venv, pycache, env)
 ├── Dockerfile           # Docker container configuration
@@ -81,9 +91,9 @@ Expensify/
    pip install -r requirements.txt
    ```
 
-3. **Configure Environment (`.env`)**:
-   ```env
-   DATABASE_URL=postgresql://postgres.herwthbqakaupwatlxbh:expensify-password@aws-1-ap-south-1.pooler.supabase.com:6543/postgres
+3. **Run Test Suite**:
+   ```bash
+   pytest --cov=app --cov-report=term-missing
    ```
 
 4. **Start Development Server**:
@@ -93,4 +103,4 @@ Expensify/
 
 5. **Access Interactive Docs**:
    - Swagger UI: `http://127.0.0.1:8000/docs`
-   - ReDoc: `http://127.0.0.1:8000/redoc`
+   - Live Production: `https://expensify-api-fj8q.onrender.com/docs`

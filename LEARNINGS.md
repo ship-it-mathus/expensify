@@ -1,6 +1,6 @@
 # 🎓 Backend & Systems Architecture Learnings
 
-A comprehensive guide for Frontend Developers transitioning to Backend & Cloud Engineering, documented during the construction of the **Expensify API**.
+A comprehensive guide for Frontend Developers transitioning to Backend & Cloud Engineering, documented during the construction and deployment of the **Expensify API**.
 
 ---
 
@@ -75,8 +75,18 @@ Connecting a serverless/cloud backend to a relational database introduces connec
 
 ---
 
-## 5. Process Memory & Environment Variables (`.env`)
+## 5. Automated Testing & In-Memory Database Isolation
 
-- Environment variables defined in `.env` are loaded into memory **at process startup**.
-- Modifying `.env` while a backend server is running will **not** dynamically update active database connections or configuration in existing worker processes.
-- **Rule of Thumb**: Always restart the backend server process (`uvicorn`) whenever `.env` parameters or database URIs are modified.
+- **Test Isolation**: Never run automated test suites against production database instances.
+- **Dependency Overriding**: In FastAPI testing, we override the `get_db` dependency in `conftest.py` to point to a temporary `sqlite:///:memory:` database.
+- **Speed & Reliability**: 10 integration and unit tests run in **0.15 seconds**, ensuring instant feedback without network latency or state pollution.
+
+---
+
+## 6. Containerization & Cloud Deployment Architecture
+
+- **`venv` vs. `Dockerfile`**:
+  - **Local (`venv`)**: Manages environment dependencies on the developer machine.
+  - **Cloud (`Dockerfile`)**: Package application logic, OS dependencies, and Python runtime into a reproducible container image.
+- **Environment Secret Isolation**: Production secrets (like `DATABASE_URL`) are never committed to version control (`.env` in `.gitignore`). Instead, they are injected at runtime via cloud platform environment settings (Render/Koyeb).
+- **Continuous Deployment (CD)**: Connecting Render to GitHub enables automated builds; every `git push` triggers container image rebuilds and deployment with zero manual intervention.
