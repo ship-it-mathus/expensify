@@ -31,6 +31,16 @@ class Account(Base):
 
     transactions = relationship("Transaction", back_populates="account", cascade="all, delete-orphan")
 
+class Category(Base):
+    __tablename__ = "categories"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    name = Column(String(50), nullable=False, index=True)
+    category_type = Column(Enum(TransactionType), nullable=False, index=True)
+    icon = Column(String(50), nullable=True)
+    is_default = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
 class Transaction(Base):
     __tablename__ = "transactions"
 

@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Account, AccountType
-from app.schemas import AccountCreate, AccountUpdate, AccountResponse, NetWorthSummary
+from app.models import Account, AccountType, Transaction
+from app.schemas import AccountCreate, AccountUpdate, AccountResponse, NetWorthSummary, TransactionResponse
 
 router = APIRouter(prefix="/api/v1", tags=["Accounts & Net Worth"])
 
@@ -70,6 +70,16 @@ def get_account(account_id: int, db: Session = Depends(get_db)):
             detail=f"Account with ID {account_id} not found"
         )
     return account
+
+@router.get("/accounts/{account_id}/transactions", response_model=List[TransactionResponse], summary="Get Transactions for Specific Account")
+def get_account_transactions(account_id: int, db: Session = Depends(get_db)):
+    account = db.query(Account).filter(Account.id == account_id).first()
+    if not account:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Account with ID {account_id} not found"
+        )
+    return db.query(Transaction).filter(Transaction.account_id == account_id).order_by(Transaction.date.desc()).all()
 
 @router.patch("/accounts/{account_id}", response_model=AccountResponse, summary="Update Account Details / Toggle Exclusion")
 def update_account(

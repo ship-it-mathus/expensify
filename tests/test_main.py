@@ -1,4 +1,5 @@
-def test_root_endpoint(client):
+def test_tc_root_001_root_endpoint(client):
+    """TC-ROOT-001: Health check root endpoint returns online status."""
     response = client.get("/")
     assert response.status_code == 200
     data = response.json()

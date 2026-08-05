@@ -38,6 +38,22 @@ class NetWorthSummary(BaseModel):
     excluded_accounts_count: int = Field(..., description="Number of accounts hidden/excluded from calculation")
     currency: str = Field(default="INR")
 
+# Category Schemas
+class CategoryBase(BaseModel):
+    name: str = Field(..., json_schema_extra={"example": "Fuel"})
+    category_type: TransactionType = Field(..., description="income vs expense", json_schema_extra={"example": TransactionType.EXPENSE})
+    icon: Optional[str] = Field(default=None, json_schema_extra={"example": "local_gas_station"})
+
+class CategoryCreate(CategoryBase):
+    pass
+
+class CategoryResponse(CategoryBase):
+    id: int
+    is_default: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
 # Transaction Schemas
 class TransactionBase(BaseModel):
     account_id: int = Field(..., description="Target Account ID for this transaction")
@@ -64,6 +80,15 @@ class CategoryItem(BaseModel):
 
 class CategoryBreakdownResponse(BaseModel):
     total_expense: float
+    categories: List[CategoryItem]
+
+class MonthlyAnalyticsResponse(BaseModel):
+    year: int
+    month: int
+    total_income: float
+    total_expense: float
+    net_savings: float
+    savings_rate_percentage: float
     categories: List[CategoryItem]
 
 # Transfer Schemas

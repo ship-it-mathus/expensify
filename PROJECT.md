@@ -1,9 +1,10 @@
 # 💳 Expensify API
 
-An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (PostgreSQL)** for tracking accounts, credit card dues, inter-account transfers, category analytics, and net available liquid money with custom account exclusion support.
+An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (PostgreSQL)** for tracking accounts, credit card dues, income/expense transactions, custom categories, monthly analytics, inter-account transfers, and net available liquid money with custom account exclusion support.
 
 🌐 **Live Production API**: [https://expensify-api-fj8q.onrender.com/docs](https://expensify-api-fj8q.onrender.com/docs)  
-📦 **GitHub Repository**: [https://github.com/ship-it-mathus/expensify](https://github.com/ship-it-mathus/expensify)
+📦 **GitHub Repository**: [https://github.com/ship-it-mathus/expensify](https://github.com/ship-it-mathus/expensify)  
+🧪 **Test Matrix**: [`TESTCASES.md`](file:///Users/mathews/Projects/Expensify/TESTCASES.md)
 
 ---
 
@@ -14,11 +15,11 @@ An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (Pos
   $$\text{Actual Liquid Money} = \sum_{\text{Included Bank Balances}} - \sum_{\text{Included Credit Card Dues}}$$
 - **Account Exclusion (Hiding)**: Toggle `include_in_net_worth = false` on specific accounts (e.g., Emergency Fund) to keep them safe from daily liquid cash calculations.
 - **Automated Transactions Engine**: Logging an income or expense transaction automatically updates target bank balances or credit card dues in real-time.
+- **Paisa-Style Category Management**: Pre-seeded default Income & Expense categories (`Salary`, `Side Hustle`, `Food`, `Fuel`, `Rent`, `Shopping`, `Utilities`), plus custom user category creation.
+- **Monthly Savings & Spending Analytics**: Monthly income vs expense totals, net savings rate, and percentage breakdown by category.
 - **Inter-Account Transfers & Bill Payments**: Transfer funds between accounts (e.g., Bank Account ➔ Credit Card to pay off dues).
-- **Category Spending Analytics**: Group expense transactions by category (Food, Shopping, Salary, Utilities) and calculate spending percentages.
+- **1000% Quality Test Suite**: 27 automated unit/integration test cases mapped to [`TESTCASES.md`](file:///Users/mathews/Projects/Expensify/TESTCASES.md) with 98% code coverage.
 - **Live OpenAPI Documentation**: Auto-generated interactive Swagger UI at `/docs`.
-- **Cloud Database Integration**: Connected to a managed PostgreSQL instance on Supabase via Transaction Pooler.
-- **Container Ready**: Prepared with Dockerfile for Koyeb or Render serverless deployment.
 
 ---
 
@@ -31,7 +32,7 @@ An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (Pos
 | **Database** | Supabase (PostgreSQL) | Managed Cloud Relational Database |
 | **ORM** | SQLAlchemy | Python SQL Toolkit and Object Relational Mapper |
 | **Validation** | Pydantic v2 | Data validation and settings management |
-| **Testing** | Pytest & HTTPX | 19 automated tests with in-memory SQLite isolation (97% coverage) |
+| **Testing** | Pytest & HTTPX | 27 automated tests with in-memory SQLite isolation (98% coverage) |
 | **Container** | Docker | Lightweight Python 3.11-slim container |
 | **Hosting** | Render | Automated CI/CD web service deployment |
 
@@ -39,29 +40,36 @@ An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (Pos
 
 ```
 Expensify/
+├── .antigravity/        # Project level Antigravity configuration
+│   └── instructions.md  # 1000% Quality & test mapping rules
 ├── app/
 │   ├── __init__.py      # Package initialization
 │   ├── main.py          # FastAPI app instance, CORS middleware & route registration
 │   ├── config.py        # Environment settings loader (.env)
 │   ├── database.py      # SQLAlchemy engine setup & DB session dependency
-│   ├── models.py        # Database models (Account, Transaction tables & Enums)
+│   ├── models.py        # Database models (Account, Category, Transaction tables & Enums)
 │   ├── schemas.py       # Pydantic request/response validation schemas
 │   └── routers/
 │       ├── __init__.py
-│       ├── accounts.py  # Endpoints for CRUD ops & net worth calculation
-│       └── transactions.py # Endpoints for transaction logging, transfers & category analytics
-├── tests/               # Automated test suite (97-100% coverage)
-│   ├── conftest.py      # Pytest fixtures & in-memory DB override
-│   ├── test_accounts.py # Account CRUD & net worth math tests
-│   ├── test_database.py # Database session lifecycle test
-│   ├── test_main.py     # Root route health check test
-│   └── test_transactions.py # Transaction engine, transfers & category analytics tests
+│       ├── accounts.py     # Account CRUD, account transactions & net worth summary
+│       ├── analytics.py    # Monthly income vs expense analytics & savings rate
+│       ├── categories.py   # Income vs Expense categories listing & custom creation
+│       └── transactions.py # Transaction logging, transfers & category analytics
+├── tests/               # Automated test suite (98-100% coverage)
+│   ├── conftest.py          # Pytest fixtures & in-memory DB override
+│   ├── test_accounts.py     # Account CRUD, account transactions & net worth tests
+│   ├── test_analytics.py    # Monthly analytics & savings rate tests
+│   ├── test_categories.py   # Category listing, filtering, duplicate & deletion tests
+│   ├── test_database.py     # Database session lifecycle test
+│   ├── test_main.py         # Root route health check test
+│   └── test_transactions.py # Transaction engine, transfers & analytics tests
 ├── .env                 # Environment variables (Database URL)
 ├── .gitignore           # Ignored files (venv, pycache, env)
 ├── Dockerfile           # Docker container configuration
 ├── LEARNINGS.md         # Systems architecture & backend engineering learnings
 ├── PROJECT.md          # Project documentation & reference
 ├── STATUS.md           # Persistent project status & roadmap tracker
+├── TESTCASES.md        # Numbered test case catalog & mapping matrix
 └── requirements.txt     # Python package dependencies
 ```
 
@@ -70,24 +78,29 @@ Expensify/
 ## 🔌 API Reference
 
 ### 1. Net Worth Summary
-- **`GET /api/v1/summary`**
-  - **Summary**: Returns total bank balances, total credit card dues, net liquid cash, and account counts.
-  - **Logic**: Automatically filters out accounts where `include_in_net_worth == false`.
+- **`GET /api/v1/summary`**: Calculate net liquid money and account counts.
 
 ### 2. Accounts CRUD
-- **`POST /api/v1/accounts`**: Create a new Bank Account or Credit Card.
-- **`GET /api/v1/accounts`**: List all accounts (optional query param: `?include_in_net_worth=true`).
+- **`POST /api/v1/accounts`**: Create a Bank Account or Credit Card.
+- **`GET /api/v1/accounts`**: List all accounts (optional query param `?include_in_net_worth=true`).
 - **`GET /api/v1/accounts/{id}`**: Get specific account details.
-- **`PATCH /api/v1/accounts/{id}`**: Update account attributes (balance, name, exclusion toggle).
-- **`DELETE /api/v1/accounts/{id}`**: Remove an account.
+- **`GET /api/v1/accounts/{id}/transactions`**: Get transaction timeline for specific account.
+- **`PATCH /api/v1/accounts/{id}`**: Update account details/balance/exclusion toggle.
+- **`DELETE /api/v1/accounts/{id}`**: Delete account.
 
-### 3. Transactions, Transfers & Category Analytics
-- **`POST /api/v1/transactions`**: Log Income or Expense (automatically updates target account balance).
-- **`POST /api/v1/transfers`**: Transfer Money Between Accounts (e.g. Bank ➔ Credit Card bill payment).
+### 3. Categories Management
+- **`GET /api/v1/categories`**: List categories (filter by `category_type=income` vs `category_type=expense`).
+- **`POST /api/v1/categories`**: Create custom category.
+- **`DELETE /api/v1/categories/{id}`**: Delete custom category.
+
+### 4. Transactions, Transfers & Analytics
+- **`POST /api/v1/transactions`**: Log Income or Expense (auto balance update).
+- **`POST /api/v1/transfers`**: Inter-account transfer (e.g. Bank ➔ Credit Card bill payment).
 - **`GET /api/v1/transactions`**: List transactions (filter by `account_id`, `category`, `transaction_type`).
 - **`GET /api/v1/transactions/{id}`**: Get transaction details.
-- **`DELETE /api/v1/transactions/{id}`**: Delete transaction and reverse the account balance adjustment.
-- **`GET /api/v1/transactions/analytics/categories`**: Return category breakdown and percentage spending.
+- **`DELETE /api/v1/transactions/{id}`**: Delete transaction & revert balance.
+- **`GET /api/v1/transactions/analytics/categories`**: Category expense breakdown.
+- **`GET /api/v1/analytics/monthly`**: Monthly income, expenses, net savings, and savings rate percentage.
 
 ---
 
