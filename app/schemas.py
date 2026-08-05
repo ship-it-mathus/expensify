@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, Field
-from app.models import AccountType
+from app.models import AccountType, TransactionType
 
+# Account Schemas
 class AccountBase(BaseModel):
     name: str = Field(..., json_schema_extra={"example": "HDFC Savings Account"})
     account_type: AccountType = Field(..., json_schema_extra={"example": AccountType.BANK})
@@ -36,3 +37,31 @@ class NetWorthSummary(BaseModel):
     included_accounts_count: int = Field(..., description="Number of accounts included in calculation")
     excluded_accounts_count: int = Field(..., description="Number of accounts hidden/excluded from calculation")
     currency: str = Field(default="INR")
+
+# Transaction Schemas
+class TransactionBase(BaseModel):
+    account_id: int = Field(..., description="Target Account ID for this transaction")
+    transaction_type: TransactionType = Field(default=TransactionType.EXPENSE, json_schema_extra={"example": TransactionType.EXPENSE})
+    amount: float = Field(..., gt=0, description="Positive transaction amount", json_schema_extra={"example": 450.0})
+    category: str = Field(default="food", json_schema_extra={"example": "food"}, description="e.g. food, salary, rent, shopping, utilities, transport, entertainment")
+    description: Optional[str] = Field(default=None, json_schema_extra={"example": "Dinner with friends"})
+    date: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc), description="Transaction timestamp")
+
+class TransactionCreate(TransactionBase):
+    pass
+
+class TransactionResponse(TransactionBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class CategoryItem(BaseModel):
+    category: str
+    total_amount: float
+    percentage: float
+
+class CategoryBreakdownResponse(BaseModel):
+    total_expense: float
+    categories: List[CategoryItem]

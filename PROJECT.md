@@ -1,6 +1,6 @@
 # 💳 Expensify API
 
-An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (PostgreSQL)** for tracking accounts, credit card dues, and net available liquid money with custom account exclusion support.
+An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (PostgreSQL)** for tracking accounts, credit card dues, income/expense transactions, category analytics, and net available liquid money with custom account exclusion support.
 
 🌐 **Live Production API**: [https://expensify-api-fj8q.onrender.com/docs](https://expensify-api-fj8q.onrender.com/docs)  
 📦 **GitHub Repository**: [https://github.com/ship-it-mathus/expensify](https://github.com/ship-it-mathus/expensify)
@@ -13,6 +13,8 @@ An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (Pos
 - **Dynamic Net Worth Calculation**:
   $$\text{Actual Liquid Money} = \sum_{\text{Included Bank Balances}} - \sum_{\text{Included Credit Card Dues}}$$
 - **Account Exclusion (Hiding)**: Toggle `include_in_net_worth = false` on specific accounts (e.g., Emergency Fund) to keep them safe from daily liquid cash calculations.
+- **Automated Transactions Engine**: Logging an income or expense transaction automatically updates target bank balances or credit card dues in real-time.
+- **Category Spending Analytics**: Group expense transactions by category (Food, Shopping, Salary, Utilities) and calculate spending percentages.
 - **Live OpenAPI Documentation**: Auto-generated interactive Swagger UI at `/docs`.
 - **Cloud Database Integration**: Connected to a managed PostgreSQL instance on Supabase via Transaction Pooler.
 - **Container Ready**: Prepared with Dockerfile for Koyeb or Render serverless deployment.
@@ -28,7 +30,7 @@ An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (Pos
 | **Database** | Supabase (PostgreSQL) | Managed Cloud Relational Database |
 | **ORM** | SQLAlchemy | Python SQL Toolkit and Object Relational Mapper |
 | **Validation** | Pydantic v2 | Data validation and settings management |
-| **Testing** | Pytest & HTTPX | 100% test coverage with in-memory SQLite isolation |
+| **Testing** | Pytest & HTTPX | 17 automated tests with in-memory SQLite isolation (98% coverage) |
 | **Container** | Docker | Lightweight Python 3.11-slim container |
 | **Hosting** | Render | Automated CI/CD web service deployment |
 
@@ -41,21 +43,24 @@ Expensify/
 │   ├── main.py          # FastAPI app instance, CORS middleware & route registration
 │   ├── config.py        # Environment settings loader (.env)
 │   ├── database.py      # SQLAlchemy engine setup & DB session dependency
-│   ├── models.py        # Database models (Account table & AccountType enum)
+│   ├── models.py        # Database models (Account, Transaction tables & Enums)
 │   ├── schemas.py       # Pydantic request/response validation schemas
 │   └── routers/
 │       ├── __init__.py
-│       └── accounts.py  # Endpoints for CRUD ops & net worth calculation
-├── tests/               # Automated test suite (99-100% coverage)
+│       ├── accounts.py  # Endpoints for CRUD ops & net worth calculation
+│       └── transactions.py # Endpoints for transaction logging & category analytics
+├── tests/               # Automated test suite (98-100% coverage)
 │   ├── conftest.py      # Pytest fixtures & in-memory DB override
 │   ├── test_accounts.py # Account CRUD & net worth math tests
 │   ├── test_database.py # Database session lifecycle test
-│   └── test_main.py     # Root route health check test
+│   ├── test_main.py     # Root route health check test
+│   └── test_transactions.py # Transaction engine & category analytics tests
 ├── .env                 # Environment variables (Database URL)
 ├── .gitignore           # Ignored files (venv, pycache, env)
 ├── Dockerfile           # Docker container configuration
 ├── LEARNINGS.md         # Systems architecture & backend engineering learnings
 ├── PROJECT.md          # Project documentation & reference
+├── STATUS.md           # Persistent project status & roadmap tracker
 └── requirements.txt     # Python package dependencies
 ```
 
@@ -74,6 +79,13 @@ Expensify/
 - **`GET /api/v1/accounts/{id}`**: Get specific account details.
 - **`PATCH /api/v1/accounts/{id}`**: Update account attributes (balance, name, exclusion toggle).
 - **`DELETE /api/v1/accounts/{id}`**: Remove an account.
+
+### 3. Transactions & Category Analytics
+- **`POST /api/v1/transactions`**: Log Income or Expense (automatically updates target account balance).
+- **`GET /api/v1/transactions`**: List transactions (filter by `account_id`, `category`, `transaction_type`).
+- **`GET /api/v1/transactions/{id}`**: Get transaction details.
+- **`DELETE /api/v1/transactions/{id}`**: Delete transaction and reverse the account balance adjustment.
+- **`GET /api/v1/transactions/analytics/categories`**: Return category breakdown and percentage spending.
 
 ---
 
