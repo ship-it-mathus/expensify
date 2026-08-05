@@ -1,6 +1,6 @@
 # 💳 Expensify API
 
-An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (PostgreSQL)** for tracking accounts, credit card dues, income/expense transactions, category analytics, and net available liquid money with custom account exclusion support.
+An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (PostgreSQL)** for tracking accounts, credit card dues, inter-account transfers, category analytics, and net available liquid money with custom account exclusion support.
 
 🌐 **Live Production API**: [https://expensify-api-fj8q.onrender.com/docs](https://expensify-api-fj8q.onrender.com/docs)  
 📦 **GitHub Repository**: [https://github.com/ship-it-mathus/expensify](https://github.com/ship-it-mathus/expensify)
@@ -14,6 +14,7 @@ An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (Pos
   $$\text{Actual Liquid Money} = \sum_{\text{Included Bank Balances}} - \sum_{\text{Included Credit Card Dues}}$$
 - **Account Exclusion (Hiding)**: Toggle `include_in_net_worth = false` on specific accounts (e.g., Emergency Fund) to keep them safe from daily liquid cash calculations.
 - **Automated Transactions Engine**: Logging an income or expense transaction automatically updates target bank balances or credit card dues in real-time.
+- **Inter-Account Transfers & Bill Payments**: Transfer funds between accounts (e.g., Bank Account ➔ Credit Card to pay off dues).
 - **Category Spending Analytics**: Group expense transactions by category (Food, Shopping, Salary, Utilities) and calculate spending percentages.
 - **Live OpenAPI Documentation**: Auto-generated interactive Swagger UI at `/docs`.
 - **Cloud Database Integration**: Connected to a managed PostgreSQL instance on Supabase via Transaction Pooler.
@@ -30,7 +31,7 @@ An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (Pos
 | **Database** | Supabase (PostgreSQL) | Managed Cloud Relational Database |
 | **ORM** | SQLAlchemy | Python SQL Toolkit and Object Relational Mapper |
 | **Validation** | Pydantic v2 | Data validation and settings management |
-| **Testing** | Pytest & HTTPX | 17 automated tests with in-memory SQLite isolation (98% coverage) |
+| **Testing** | Pytest & HTTPX | 19 automated tests with in-memory SQLite isolation (97% coverage) |
 | **Container** | Docker | Lightweight Python 3.11-slim container |
 | **Hosting** | Render | Automated CI/CD web service deployment |
 
@@ -48,13 +49,13 @@ Expensify/
 │   └── routers/
 │       ├── __init__.py
 │       ├── accounts.py  # Endpoints for CRUD ops & net worth calculation
-│       └── transactions.py # Endpoints for transaction logging & category analytics
-├── tests/               # Automated test suite (98-100% coverage)
+│       └── transactions.py # Endpoints for transaction logging, transfers & category analytics
+├── tests/               # Automated test suite (97-100% coverage)
 │   ├── conftest.py      # Pytest fixtures & in-memory DB override
 │   ├── test_accounts.py # Account CRUD & net worth math tests
 │   ├── test_database.py # Database session lifecycle test
 │   ├── test_main.py     # Root route health check test
-│   └── test_transactions.py # Transaction engine & category analytics tests
+│   └── test_transactions.py # Transaction engine, transfers & category analytics tests
 ├── .env                 # Environment variables (Database URL)
 ├── .gitignore           # Ignored files (venv, pycache, env)
 ├── Dockerfile           # Docker container configuration
@@ -80,8 +81,9 @@ Expensify/
 - **`PATCH /api/v1/accounts/{id}`**: Update account attributes (balance, name, exclusion toggle).
 - **`DELETE /api/v1/accounts/{id}`**: Remove an account.
 
-### 3. Transactions & Category Analytics
+### 3. Transactions, Transfers & Category Analytics
 - **`POST /api/v1/transactions`**: Log Income or Expense (automatically updates target account balance).
+- **`POST /api/v1/transfers`**: Transfer Money Between Accounts (e.g. Bank ➔ Credit Card bill payment).
 - **`GET /api/v1/transactions`**: List transactions (filter by `account_id`, `category`, `transaction_type`).
 - **`GET /api/v1/transactions/{id}`**: Get transaction details.
 - **`DELETE /api/v1/transactions/{id}`**: Delete transaction and reverse the account balance adjustment.

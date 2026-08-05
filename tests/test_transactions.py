@@ -131,3 +131,49 @@ def test_category_spending_breakdown_with_account_filter(client):
     assert len(data["categories"]) == 1
     assert data["categories"][0]["category"] == "food"
     assert data["categories"][0]["percentage"] == 100.0
+
+def test_transfer_bank_to_credit_card_bill_payment(client):
+    # Bank Account: 50,000 | Credit Card Due: 15,000
+    bank_id = client.post("/api/v1/accounts", json={"name": "Salary Bank", "account_type": "bank", "balance": 50000.0}).json()["id"]
+    card_id = client.post("/api/v1/accounts", json={"name": "Credit Card", "account_type": "credit_card", "balance": 15000.0}).json()["id"]
+
+    # Transfer 10,000 from Bank to Credit Card
+    transfer_res = client.post("/api/v1/transfers", json={
+        "from_account_id": bank_id,
+        "to_account_id": card_id,
+        "amount": 10000.0,
+        "description": "July Bill Payment"
+    })
+    assert transfer_res.status_code == 201
+    data = transfer_res.json()
+
+    assert data["amount"] == 10000.0
+    assert data["from_account_new_balance"] == 40000.0
+    assert data["to_account_new_balance"] == 50000.0 or data["to_account_new_balance"] == 5000.0
+
+    # Verify Bank balance reduced to 40,000
+    assert client.get(f"/api/v1/accounts/{bank_id}").json()["balance"] == 40000.0
+
+    # Verify Credit Card due reduced from 15,000 to 5,000
+    assert client.get(f"/api/v1/accounts/{card_id}").json()["balance"] == 5000.0
+
+def test_transfer_validation_errors(client):
+    acc_id = client.post("/api/v1/accounts", json={"name": "B1", "account_type": "bank", "balance": 5000.0}).json()["id"]
+
+    # Same source and destination account ➔ 422 Unprocessable Entity
+    same_res = client.post("/api/v1/transfers", json={
+        "from_account_id": acc_id, "to_account_id": acc_id, "amount": 500.0
+    })
+    assert same_res.status_code == 422
+
+    # Non-existing source ➔ 404
+    missing_from = client.post("/api/v1/transfers", json={
+        "from_account_id": 99999, "to_account_id": acc_id, "amount": 500.0
+    })
+    assert missing_from.status_code == 404
+
+    # Non-existing destination ➔ 404
+    missing_to = client.post("/api/v1/transfers", json={
+        "from_account_id": acc_id, "to_account_id": 99999, "amount": 500.0
+    })
+    assert missing_to.status_code == 404

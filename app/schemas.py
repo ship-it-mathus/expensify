@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional, List
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.models import AccountType, TransactionType
 
 # Account Schemas
@@ -43,7 +43,7 @@ class TransactionBase(BaseModel):
     account_id: int = Field(..., description="Target Account ID for this transaction")
     transaction_type: TransactionType = Field(default=TransactionType.EXPENSE, json_schema_extra={"example": TransactionType.EXPENSE})
     amount: float = Field(..., gt=0, description="Positive transaction amount", json_schema_extra={"example": 450.0})
-    category: str = Field(default="food", json_schema_extra={"example": "food"}, description="e.g. food, salary, rent, shopping, utilities, transport, entertainment")
+    category: str = Field(default="food", json_schema_extra={"example": "food"}, description="e.g. food, salary, rent, shopping, utilities, transfer, bill_payment")
     description: Optional[str] = Field(default=None, json_schema_extra={"example": "Dinner with friends"})
     date: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc), description="Transaction timestamp")
 
@@ -65,3 +65,30 @@ class CategoryItem(BaseModel):
 class CategoryBreakdownResponse(BaseModel):
     total_expense: float
     categories: List[CategoryItem]
+
+# Transfer Schemas
+class TransferCreate(BaseModel):
+    from_account_id: int = Field(..., description="Source Account ID (e.g. Bank Account)", json_schema_extra={"example": 1})
+    to_account_id: int = Field(..., description="Destination Account ID (e.g. Credit Card for bill payment)", json_schema_extra={"example": 2})
+    amount: float = Field(..., gt=0, description="Transfer amount", json_schema_extra={"example": 10000.0})
+    description: Optional[str] = Field(default=None, json_schema_extra={"example": "Credit Card Bill Payment"})
+    date: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @model_validator(mode="after")
+    def check_different_accounts(self):
+        if self.from_account_id == self.to_account_id:
+            raise ValueError("from_account_id and to_account_id cannot be the same account.")
+        return self
+
+class TransferResponse(BaseModel):
+    message: str
+    amount: float
+    from_account_id: int
+    from_account_name: str
+    from_account_new_balance: float
+    to_account_id: int
+    to_account_name: str
+    to_account_new_balance: float
+    outflow_transaction_id: int
+    inflow_transaction_id: int
+    date: datetime
