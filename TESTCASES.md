@@ -6,10 +6,10 @@ This file catalogs every unit and integration test case implemented in the Expen
 
 ## 📊 Test Execution Summary
 
-- **Total Test Cases**: 26
-- **Pass Rate**: 100% (26/26 Passed)
+- **Total Test Cases**: 29
+- **Pass Rate**: 100% (29/29 Passed)
 - **Code Coverage**: 98%
-- **Execution Time**: ~0.40 seconds
+- **Execution Time**: ~0.50 seconds
 
 ---
 
@@ -23,11 +23,12 @@ This file catalogs every unit and integration test case implemented in the Expen
 
 ---
 
-### 🔌 2. Database Session Lifecycle (`tests/test_database.py`)
+### 🔌 2. Database Session Lifecycle & ULIDs (`tests/test_database.py`)
 
 | Test ID | Test Name | Description / Boundary Condition | Target Function | Expected Behavior | Implementation Link |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `TC-DB-001` | Session Lifecycle | Verifies `get_db()` generator yields clean session and closes after request. | `app.database.get_db()` | Yields SQLAlchemy Session | [`test_tc_db_001_get_db_generator`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L3-L11) |
+| `TC-DB-002` | ULID Generator Format | Verifies `generate_ulid()` yields a valid 26-character Base32 string. | `app.models.generate_ulid()` | Returns 26-char ULID String | [`test_tc_db_002_ulid_format`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L13-L19) |
 
 ---
 
@@ -59,7 +60,8 @@ This file catalogs every unit and integration test case implemented in the Expen
 | `TC-TX-006` | Empty Category Analytics | Returns 0.0 total expense and empty categories array. | `GET /api/v1/transactions/analytics/categories` | `200 OK` | [`test_tc_tx_006_empty_category_breakdown`](file:///Users/mathews/Projects/Expensify/tests/test_transactions.py#L110-L115) |
 | `TC-TX-007` | Category Spending Breakdown | Calculates total spending per category and exact spending percentages. | `GET /api/v1/transactions/analytics/categories` | `200 OK` | [`test_tc_tx_007_category_spending_breakdown_with_account_filter`](file:///Users/mathews/Projects/Expensify/tests/test_transactions.py#L117-L131) |
 | `TC-TX-008` | Inter-Account Bill Transfer | Transfer from Bank ➔ Credit Card reduces bank balance and reduces credit card due. | `POST /api/v1/transfers` | `201 Created` | [`test_tc_tx_008_transfer_bank_to_credit_card_bill_payment`](file:///Users/mathews/Projects/Expensify/tests/test_transactions.py#L133-L154) |
-| `TC-TX-009` | Transfer Validation Errors | Prevents same-account transfers (422) and missing source/dest accounts (404). | `POST /api/v1/transfers` | `422` / `404 Not Found` | [`test_tc_tx_009_transfer_validation_errors`](file:///Users/mathews/Projects/Expensify/tests/test_transactions.py#L156-L173) |
+| `TC-TX-009` | Transfer Validation Errors | Prevents same-account transfers (422) and missing source/dest accounts (404). | `POST /api/v1/transfers` | `422` / `404 Not Found` | [`test_tc_tx_009_transfer_validation_errors`](file:///Users/mathews/Projects/Expensify/tests/test_transactions.py#L156-L168) |
+| `TC-TX-010` | Implicit Transfer Tagging | Verifies implicit `transfer_tag` classification for `Self Fund Transfer` and `Card Cash Advance`. | `POST /api/v1/transfers` | `201 Created` | [`test_tc_tx_010_implicit_transfer_tag_classifications`](file:///Users/mathews/Projects/Expensify/tests/test_transactions.py#L170-L183) |
 
 ---
 

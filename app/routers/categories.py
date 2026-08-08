@@ -29,7 +29,11 @@ DEFAULT_CATEGORIES = [
 ]
 
 def seed_default_categories(db: Session):
-    """Utility to seed default Paisa categories if categories table is empty."""
+    """
+    Utility function to automatically seed Paisa system default categories
+    (with `is_default = True`) if the categories table is currently empty.
+    ULIDs are auto-generated for each category during creation.
+    """
     count = db.query(Category).count()
     if count == 0:
         for cat in DEFAULT_CATEGORIES:
@@ -45,6 +49,10 @@ def list_categories(
     category_type: Optional[TransactionType] = None,
     db: Session = Depends(get_db)
 ):
+    """
+    Returns all categories. Order prioritizes default categories first (`is_default DESC`),
+    followed alphabetically by category name (`name ASC`).
+    """
     seed_default_categories(db)
     query = db.query(Category)
     if category_type is not None:
@@ -61,8 +69,12 @@ def create_category(
     category_in: CategoryCreate,
     db: Session = Depends(get_db)
 ):
+    """
+    Creates a user custom category. All user-created categories are initialized
+    with `is_default = False` so they can be managed or deleted by the user.
+    """
     seed_default_categories(db)
-    # Check duplicate
+    # Prevent duplicate category names under the same category type (income vs expense)
     existing = db.query(Category).filter(
         Category.name.ilike(category_in.name),
         Category.category_type == category_in.category_type
@@ -77,7 +89,7 @@ def create_category(
         name=category_in.name.strip(),
         category_type=category_in.category_type,
         icon=category_in.icon or "tag",
-        is_default=False
+        is_default=False  # User-created custom categories are never system defaults
     )
     db.add(db_cat)
     db.commit()
@@ -90,15 +102,24 @@ def create_category(
     summary="Delete Custom Category"
 )
 def delete_category(
-    category_id: int,
+    category_id: str,
     db: Session = Depends(get_db)
 ):
+    """
+    Deletes a custom category.
+    
+    SAFETY CHECK (`is_default` Guard Rail):
+    Blocks deletion of system default categories (`is_default = True`) with HTTP 400.
+    Only user-created custom categories (`is_default = False`) can be deleted.
+    """
     cat = db.query(Category).filter(Category.id == category_id).first()
     if not cat:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Category with ID {category_id} not found"
         )
+    
+    # Block deletion if it's a pre-seeded system default category
     if cat.is_default:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -108,3 +129,4 @@ def delete_category(
     db.delete(cat)
     db.commit()
     return None
+

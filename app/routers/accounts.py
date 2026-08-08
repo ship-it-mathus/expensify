@@ -62,7 +62,7 @@ def list_accounts(
     return query.all()
 
 @router.get("/accounts/{account_id}", response_model=AccountResponse, summary="Get Account Details")
-def get_account(account_id: int, db: Session = Depends(get_db)):
+def get_account(account_id: str, db: Session = Depends(get_db)):
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
         raise HTTPException(
@@ -72,7 +72,7 @@ def get_account(account_id: int, db: Session = Depends(get_db)):
     return account
 
 @router.get("/accounts/{account_id}/transactions", response_model=List[TransactionResponse], summary="Get Transactions for Specific Account")
-def get_account_transactions(account_id: int, db: Session = Depends(get_db)):
+def get_account_transactions(account_id: str, db: Session = Depends(get_db)):
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
         raise HTTPException(
@@ -83,7 +83,7 @@ def get_account_transactions(account_id: int, db: Session = Depends(get_db)):
 
 @router.patch("/accounts/{account_id}", response_model=AccountResponse, summary="Update Account Details / Toggle Exclusion")
 def update_account(
-    account_id: int,
+    account_id: str,
     account_in: AccountUpdate,
     db: Session = Depends(get_db)
 ):
@@ -103,7 +103,7 @@ def update_account(
     return account
 
 @router.delete("/accounts/{account_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete Account")
-def delete_account(account_id: int, db: Session = Depends(get_db)):
+def delete_account(account_id: str, db: Session = Depends(get_db)):
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
         raise HTTPException(
