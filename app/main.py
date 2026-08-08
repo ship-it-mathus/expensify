@@ -31,17 +31,13 @@ app.include_router(transactions.router)
 app.include_router(categories.router)
 app.include_router(analytics.router)
 
-@app.get("/api/health", tags=["Health Check"])
-def health_check():
+@app.get("/", tags=["Health Check"])
+def root():
     return {
         "status": "online",
-        "message": "Welcome to Expensify API!",
+        "message": "Welcome to Expensify REST API!",
         "docs_url": "/docs",
         "redoc_url": "/redoc"
     }
 
-# Mount Static PWA Dashboard Files
-static_dir = os.path.join(os.path.dirname(__file__), "static")
-if os.path.exists(static_dir):
-    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
