@@ -17,6 +17,20 @@ from app.schemas import (
 
 router = APIRouter(prefix="/api/v1", tags=["Transactions & Transfers"])
 
+def adjust_account_balance(account: Account, amount: float, tx_type: TransactionType, is_reversal: bool = False):
+    """
+    Adjusts account balance based on AccountType (Bank vs Credit Card) and TransactionType (Income vs Expense).
+    If is_reversal=True, reverses the operation (used when deleting a transaction).
+    """
+    is_expense = (tx_type == TransactionType.EXPENSE)
+    if is_reversal:
+        is_expense = not is_expense
+
+    if account.account_type == AccountType.BANK:
+        account.balance += (-amount if is_expense else amount)
+    elif account.account_type == AccountType.CREDIT_CARD:
+        account.balance += (amount if is_expense else -amount)
+
 @router.post(
     "/transactions",
     response_model=TransactionResponse,
@@ -41,18 +55,8 @@ def create_transaction(
             detail=f"Account with ID {tx_in.account_id} not found"
         )
 
-    # Calculate balance adjustment
-    amount = tx_in.amount
-    if account.account_type == AccountType.BANK:
-        if tx_in.transaction_type == TransactionType.EXPENSE:
-            account.balance -= amount
-        else:
-            account.balance += amount
-    elif account.account_type == AccountType.CREDIT_CARD:
-        if tx_in.transaction_type == TransactionType.EXPENSE:
-            account.balance += amount
-        else:
-            account.balance -= amount
+    # Adjust account balance dynamically
+    adjust_account_balance(account, tx_in.amount, tx_in.transaction_type, is_reversal=False)
 
     # Create transaction record
     db_tx = Transaction(**tx_in.model_dump())
@@ -62,6 +66,7 @@ def create_transaction(
     db.refresh(account)
 
     return db_tx
+
 
 @router.post(
     "/transfers",
@@ -249,7 +254,6 @@ def get_transaction(transaction_id: str, db: Session = Depends(get_db)):
     summary="Delete Transaction (Reverses Balance Update)"
 )
 def delete_transaction(transaction_id: str, db: Session = Depends(get_db)):
-
     tx = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if not tx:
         raise HTTPException(
@@ -260,18 +264,9 @@ def delete_transaction(transaction_id: str, db: Session = Depends(get_db)):
     # Revert account balance adjustment
     account = db.query(Account).filter(Account.id == tx.account_id).first()
     if account:
-        amount = tx.amount
-        if account.account_type == AccountType.BANK:
-            if tx.transaction_type == TransactionType.EXPENSE:
-                account.balance += amount
-            else:
-                account.balance -= amount
-        elif account.account_type == AccountType.CREDIT_CARD:
-            if tx.transaction_type == TransactionType.EXPENSE:
-                account.balance -= amount
-            else:
-                account.balance += amount
+        adjust_account_balance(account, tx.amount, tx.transaction_type, is_reversal=True)
 
     db.delete(tx)
     db.commit()
     return None
+

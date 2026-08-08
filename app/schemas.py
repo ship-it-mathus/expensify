@@ -118,4 +118,3 @@ class TransferResponse(BaseModel):
     outflow_transaction_id: str
     inflow_transaction_id: str
     date: datetime
-
