@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
+
 from app.config import settings
 from app.database import engine, Base
 from app.routers import accounts, transactions, categories, analytics
@@ -13,26 +16,32 @@ app = FastAPI(
     description="Expensify REST API - Live Expense, Transactions, Categories & Net Available Money Tracker."
 )
 
-# Enable CORS for cross-origin requests (for your future Web / Mobile app)
+# Enable CORS for cross-origin requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with your specific frontend domain
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Register Routers
+# Register API Routers
 app.include_router(accounts.router)
 app.include_router(transactions.router)
 app.include_router(categories.router)
 app.include_router(analytics.router)
 
-@app.get("/", tags=["Health Check"])
-def root():
+@app.get("/api/health", tags=["Health Check"])
+def health_check():
     return {
         "status": "online",
         "message": "Welcome to Expensify API!",
         "docs_url": "/docs",
         "redoc_url": "/redoc"
     }
+
+# Mount Static PWA Dashboard Files
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_dir):
+    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+

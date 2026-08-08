@@ -6,10 +6,10 @@ This file catalogs every unit and integration test case implemented in the Expen
 
 ## 📊 Test Execution Summary
 
-- **Total Test Cases**: 29
-- **Pass Rate**: 100% (29/29 Passed)
-- **Code Coverage**: 98%
-- **Execution Time**: ~0.50 seconds
+- **Total Test Cases**: 30
+- **Pass Rate**: 100% (30/30 Passed)
+- **Code Coverage**: 99%
+- **Execution Time**: ~0.55 seconds
 
 ---
 
@@ -19,7 +19,9 @@ This file catalogs every unit and integration test case implemented in the Expen
 
 | Test ID | Test Name | Description / Boundary Condition | Target Endpoint | Expected Status | Implementation Link |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `TC-ROOT-001` | Root Health Check | Verifies root endpoint returns online status message and docs URL. | `GET /` | `200 OK` | [`test_tc_root_001_root_endpoint`](file:///Users/mathews/Projects/Expensify/tests/test_main.py#L1-L8) |
+| `TC-ROOT-001` | API Health Check | Verifies API health endpoint returns online status message and docs URL. | `GET /api/health` | `200 OK` | [`test_tc_root_001_health_check`](file:///Users/mathews/Projects/Expensify/tests/test_main.py#L1-L8) |
+| `TC-ROOT-002` | Mobile Dashboard PWA | Verifies root endpoint serves the PWA single page app HTML. | `GET /` | `200 OK` | [`test_tc_root_002_pwa_dashboard`](file:///Users/mathews/Projects/Expensify/tests/test_main.py#L10-L15) |
+
 
 ---
 
