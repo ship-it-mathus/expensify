@@ -114,8 +114,9 @@ function renderNetWorthHero() {
 }
 
 function renderAccountsList() {
-  const container = document.getElementById('accounts-list-container');
+  const container = document.getElementById('accounts-tab-container');
   if (!container) return;
+
 
   if (state.accounts.length === 0) {
     container.innerHTML = `
@@ -158,42 +159,49 @@ function renderAccountsList() {
 }
 
 function renderTransactionsList() {
-  const container = document.getElementById('transactions-list-container');
-  if (!container) return;
+  const containers = [
+    document.getElementById('transactions-list-container'),
+    document.getElementById('full-transactions-container')
+  ];
 
-  if (state.transactions.length === 0) {
-    container.innerHTML = `
-      <div style="text-align: center; padding: 24px; color: var(--text-muted);">
-        No transactions recorded yet.
-      </div>
-    `;
-    return;
-  }
+  containers.forEach(container => {
+    if (!container) return;
 
-  container.innerHTML = state.transactions.slice(0, 15).map(tx => {
-    const isExpense = tx.transaction_type === 'expense';
-    const icon = isExpense ? 'call_made' : 'call_received';
-    const typeClass = isExpense ? 'expense' : 'income';
-    const sign = isExpense ? '-' : '+';
-    const txDate = new Date(tx.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
-
-    return `
-      <div class="tx-card">
-        <div class="tx-icon ${typeClass}">
-          <span class="material-symbols-outlined">${icon}</span>
+    if (state.transactions.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 24px; color: var(--text-muted);">
+          No transactions recorded yet.
         </div>
-        <div class="tx-details">
-          <div class="desc">${tx.description || tx.category}</div>
-          <div class="sub">${tx.category.toUpperCase()} • ${txDate}</div>
+      `;
+      return;
+    }
+
+    container.innerHTML = state.transactions.map(tx => {
+      const isExpense = tx.transaction_type === 'expense';
+      const icon = isExpense ? 'call_made' : 'call_received';
+      const typeClass = isExpense ? 'expense' : 'income';
+      const sign = isExpense ? '-' : '+';
+      const txDate = new Date(tx.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+
+      return `
+        <div class="tx-card">
+          <div class="tx-icon ${typeClass}">
+            <span class="material-symbols-outlined">${icon}</span>
+          </div>
+          <div class="tx-details">
+            <div class="desc">${tx.description || tx.category}</div>
+            <div class="sub">${tx.category.toUpperCase()} • ${txDate}</div>
+          </div>
+          <div class="tx-amount ${typeClass}">${sign}${formatCurrency(tx.amount)}</div>
+          <button class="btn-icon" onclick="deleteTx('${tx.id}')" title="Delete Transaction" style="margin-left: 8px; width: 28px; height: 28px;">
+            <span class="material-symbols-outlined" style="font-size: 0.9rem; color: var(--danger);">delete</span>
+          </button>
         </div>
-        <div class="tx-amount ${typeClass}">${sign}${formatCurrency(tx.amount)}</div>
-        <button class="btn-icon" onclick="deleteTx('${tx.id}')" title="Delete Transaction" style="margin-left: 8px; width: 28px; height: 28px;">
-          <span class="material-symbols-outlined" style="font-size: 0.9rem; color: var(--danger);">delete</span>
-        </button>
-      </div>
-    `;
-  }).join('');
+      `;
+    }).join('');
+  });
 }
+
 
 function renderAnalyticsView() {
   if (!state.analytics) return;
