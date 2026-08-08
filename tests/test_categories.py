@@ -59,5 +59,5 @@ def test_tc_cat_005_delete_custom_category_rules(client):
     assert "cannot delete system default" in del_def_res.json()["detail"].lower()
 
     # Delete non-existing category ➔ 404
-    del_404 = client.delete("/api/v1/categories/99999")
+    del_404 = client.delete("/api/v1/categories/non_existent_id")
     assert del_404.status_code == 404

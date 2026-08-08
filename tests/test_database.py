@@ -9,3 +9,10 @@ def test_tc_db_001_get_db_generator():
         next(db_gen)
     except StopIteration:
         pass
+
+def test_tc_db_002_ulid_format():
+    """TC-DB-002: Verify generate_ulid returns a valid 26-character Base32 string."""
+    from app.models import generate_ulid
+    ulid_str = generate_ulid()
+    assert isinstance(ulid_str, str)
+    assert len(ulid_str) == 26

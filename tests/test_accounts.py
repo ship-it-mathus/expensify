@@ -80,7 +80,7 @@ def test_tc_acc_005_get_account_by_id(client):
     assert res.status_code == 200
     assert res.json()["name"] == "SBI Account"
 
-    res_404 = client.get("/api/v1/accounts/9999")
+    res_404 = client.get("/api/v1/accounts/non_existent_id")
     assert res_404.status_code == 404
     assert "not found" in res_404.json()["detail"].lower()
 
@@ -102,7 +102,7 @@ def test_tc_acc_006_update_account(client):
     assert updated["balance"] == 2500.0
     assert updated["include_in_net_worth"] is False
 
-    patch_404 = client.patch("/api/v1/accounts/9999", json={"balance": 500.0})
+    patch_404 = client.patch("/api/v1/accounts/non_existent_id", json={"balance": 500.0})
     assert patch_404.status_code == 404
 
 def test_tc_acc_007_delete_account(client):
@@ -118,7 +118,7 @@ def test_tc_acc_007_delete_account(client):
     get_res = client.get(f"/api/v1/accounts/{account_id}")
     assert get_res.status_code == 404
 
-    del_404 = client.delete("/api/v1/accounts/9999")
+    del_404 = client.delete("/api/v1/accounts/non_existent_id")
     assert del_404.status_code == 404
 
 def test_tc_acc_008_net_worth_calculation_logic(client):
@@ -159,5 +159,5 @@ def test_tc_acc_009_get_account_specific_transactions(client):
     assert len(txs1.json()) == 1
     assert txs1.json()[0]["amount"] == 100.0
 
-    txs_404 = client.get("/api/v1/accounts/99999/transactions")
+    txs_404 = client.get("/api/v1/accounts/non_existent_id/transactions")
     assert txs_404.status_code == 404

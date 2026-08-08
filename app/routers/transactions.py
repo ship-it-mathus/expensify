@@ -97,6 +97,16 @@ def create_transfer(
     tx_date = transfer_in.date or datetime.now(timezone.utc)
     desc_note = transfer_in.description or "Account Transfer"
 
+    # Implicitly detect transfer classification based on source & destination account types
+    if from_acc.account_type == AccountType.BANK and to_acc.account_type == AccountType.CREDIT_CARD:
+        transfer_tag = "Credit Card Bill Payment"
+    elif from_acc.account_type == AccountType.BANK and to_acc.account_type == AccountType.BANK:
+        transfer_tag = "Self Fund Transfer"
+    elif from_acc.account_type == AccountType.CREDIT_CARD and to_acc.account_type == AccountType.BANK:
+        transfer_tag = "Card Cash Advance"
+    else:
+        transfer_tag = "Account Transfer"
+
     # 1. Update source account balance
     if from_acc.account_type == AccountType.BANK:
         from_acc.balance -= amount
@@ -115,7 +125,7 @@ def create_transfer(
         transaction_type=TransactionType.EXPENSE,
         amount=amount,
         category="transfer",
-        description=f"Transfer to {to_acc.name} ({desc_note})",
+        description=f"[{transfer_tag}] Transfer to {to_acc.name} ({desc_note})",
         date=tx_date
     )
 
@@ -125,7 +135,7 @@ def create_transfer(
         transaction_type=TransactionType.INCOME,
         amount=amount,
         category="transfer",
-        description=f"Transfer from {from_acc.name} ({desc_note})",
+        description=f"[{transfer_tag}] Transfer from {from_acc.name} ({desc_note})",
         date=tx_date
     )
 
@@ -139,6 +149,7 @@ def create_transfer(
     return TransferResponse(
         message=f"Successfully transferred {amount} from {from_acc.name} to {to_acc.name}",
         amount=amount,
+        transfer_tag=transfer_tag,
         from_account_id=from_acc.id,
         from_account_name=from_acc.name,
         from_account_new_balance=round(from_acc.balance, 2),
@@ -150,13 +161,14 @@ def create_transfer(
         date=tx_date
     )
 
+
 @router.get(
     "/transactions",
     response_model=List[TransactionResponse],
     summary="List Transactions"
 )
 def list_transactions(
-    account_id: Optional[int] = None,
+    account_id: Optional[str] = None,
     category: Optional[str] = None,
     transaction_type: Optional[TransactionType] = None,
     db: Session = Depends(get_db)
@@ -177,7 +189,7 @@ def list_transactions(
     summary="Category Spending Breakdown Analytics"
 )
 def get_category_breakdown(
-    account_id: Optional[int] = None,
+    account_id: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """
@@ -222,7 +234,7 @@ def get_category_breakdown(
     response_model=TransactionResponse,
     summary="Get Transaction Details"
 )
-def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
+def get_transaction(transaction_id: str, db: Session = Depends(get_db)):
     tx = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if not tx:
         raise HTTPException(
@@ -236,7 +248,8 @@ def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete Transaction (Reverses Balance Update)"
 )
-def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
+def delete_transaction(transaction_id: str, db: Session = Depends(get_db)):
+
     tx = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if not tx:
         raise HTTPException(

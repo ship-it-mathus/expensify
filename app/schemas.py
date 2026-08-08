@@ -24,7 +24,7 @@ class AccountUpdate(BaseModel):
     notes: Optional[str] = None
 
 class AccountResponse(AccountBase):
-    id: int
+    id: str
     created_at: datetime
     updated_at: datetime
 
@@ -48,7 +48,7 @@ class CategoryCreate(CategoryBase):
     pass
 
 class CategoryResponse(CategoryBase):
-    id: int
+    id: str
     is_default: bool
     created_at: datetime
 
@@ -56,7 +56,7 @@ class CategoryResponse(CategoryBase):
 
 # Transaction Schemas
 class TransactionBase(BaseModel):
-    account_id: int = Field(..., description="Target Account ID for this transaction")
+    account_id: str = Field(..., description="Target Account ULID for this transaction")
     transaction_type: TransactionType = Field(default=TransactionType.EXPENSE, json_schema_extra={"example": TransactionType.EXPENSE})
     amount: float = Field(..., gt=0, description="Positive transaction amount", json_schema_extra={"example": 450.0})
     category: str = Field(default="food", json_schema_extra={"example": "food"}, description="e.g. food, salary, rent, shopping, utilities, transfer, bill_payment")
@@ -67,7 +67,7 @@ class TransactionCreate(TransactionBase):
     pass
 
 class TransactionResponse(TransactionBase):
-    id: int
+    id: str
     created_at: datetime
     updated_at: datetime
 
@@ -93,8 +93,8 @@ class MonthlyAnalyticsResponse(BaseModel):
 
 # Transfer Schemas
 class TransferCreate(BaseModel):
-    from_account_id: int = Field(..., description="Source Account ID (e.g. Bank Account)", json_schema_extra={"example": 1})
-    to_account_id: int = Field(..., description="Destination Account ID (e.g. Credit Card for bill payment)", json_schema_extra={"example": 2})
+    from_account_id: str = Field(..., description="Source Account ULID (e.g. Bank Account)")
+    to_account_id: str = Field(..., description="Destination Account ULID (e.g. Credit Card for bill payment)")
     amount: float = Field(..., gt=0, description="Transfer amount", json_schema_extra={"example": 10000.0})
     description: Optional[str] = Field(default=None, json_schema_extra={"example": "Credit Card Bill Payment"})
     date: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -108,12 +108,14 @@ class TransferCreate(BaseModel):
 class TransferResponse(BaseModel):
     message: str
     amount: float
-    from_account_id: int
+    transfer_tag: str = Field(..., description="Implicit transfer classification e.g. Credit Card Bill Payment, Self Fund Transfer, Card Cash Advance")
+    from_account_id: str
     from_account_name: str
     from_account_new_balance: float
-    to_account_id: int
+    to_account_id: str
     to_account_name: str
     to_account_new_balance: float
-    outflow_transaction_id: int
-    inflow_transaction_id: int
+    outflow_transaction_id: str
+    inflow_transaction_id: str
     date: datetime
+

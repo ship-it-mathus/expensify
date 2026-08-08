@@ -144,6 +144,7 @@ def test_tc_tx_008_transfer_bank_to_credit_card_bill_payment(client):
     data = transfer_res.json()
 
     assert data["amount"] == 10000.0
+    assert data["transfer_tag"] == "Credit Card Bill Payment"
     assert data["from_account_new_balance"] == 40000.0
 
     assert client.get(f"/api/v1/accounts/{bank_id}").json()["balance"] == 40000.0
@@ -159,11 +160,26 @@ def test_tc_tx_009_transfer_validation_errors(client):
     assert same_res.status_code == 422
 
     missing_from = client.post("/api/v1/transfers", json={
-        "from_account_id": 99999, "to_account_id": acc_id, "amount": 500.0
+        "from_account_id": "non_existent_id", "to_account_id": acc_id, "amount": 500.0
     })
     assert missing_from.status_code == 404
 
     missing_to = client.post("/api/v1/transfers", json={
-        "from_account_id": acc_id, "to_account_id": 99999, "amount": 500.0
+        "from_account_id": acc_id, "to_account_id": "non_existent_id", "amount": 500.0
     })
     assert missing_to.status_code == 404
+
+def test_tc_tx_010_implicit_transfer_tag_classifications(client):
+    """TC-TX-010: Verify implicit transfer_tag for Self Fund Transfer and Card Cash Advance."""
+    b1_id = client.post("/api/v1/accounts", json={"name": "Bank 1", "account_type": "bank", "balance": 10000.0}).json()["id"]
+    b2_id = client.post("/api/v1/accounts", json={"name": "Bank 2", "account_type": "bank", "balance": 2000.0}).json()["id"]
+    card_id = client.post("/api/v1/accounts", json={"name": "Card 1", "account_type": "credit_card", "balance": 0.0}).json()["id"]
+
+    # 1. Bank -> Bank = Self Fund Transfer
+    t1 = client.post("/api/v1/transfers", json={"from_account_id": b1_id, "to_account_id": b2_id, "amount": 1000.0}).json()
+    assert t1["transfer_tag"] == "Self Fund Transfer"
+
+    # 2. Card -> Bank = Card Cash Advance
+    t2 = client.post("/api/v1/transfers", json={"from_account_id": card_id, "to_account_id": b1_id, "amount": 500.0}).json()
+    assert t2["transfer_tag"] == "Card Cash Advance"
+
