@@ -1,61 +1,77 @@
-# 💳 Expensify API
+# 💳 Expensify
 
-> A fast, asynchronous, cloud-hosted expense & net worth tracking API built with **FastAPI**, **Supabase (PostgreSQL)**, and **Docker**. Inspired by Paisa's clean workflow.
+> A full-stack personal finance tracker with **Angular 18**, **FastAPI**, **Supabase Auth**, and **Docker**. Multi-user, mobile-first, and live on the web.
 
 [![Live Web App](https://img.shields.io/badge/Live_App-Expensify-purple)](https://expensify-api-fj8q.onrender.com/)
-[![Production API](https://img.shields.io/badge/Production_API-Render-brightgreen)](https://expensify-api-fj8q.onrender.com/docs)
+[![Production API](https://img.shields.io/badge/API_Docs-Swagger_UI-brightgreen)](https://expensify-api-fj8q.onrender.com/docs)
 [![Database](https://img.shields.io/badge/Database-Supabase_PostgreSQL-blue)](https://supabase.com)
-[![Tests](https://img.shields.io/badge/Tests-32_Passed_99%25_Cov-success)](TESTCASES.md)
+[![Tests](https://img.shields.io/badge/Tests-32_Passed-success)](TESTCASES.md)
+[![Auth](https://img.shields.io/badge/Auth-Supabase_JWT-orange)](https://supabase.com/docs/guides/auth)
 
 ---
 
-## 🌟 Features at a Glance
+## 🌟 Features
 
-- 🏦 **Multi-Account Management**: Track Bank Accounts and Credit Cards seamlessly in one place.
-- 💡 **Actual Liquid Cash Math**:
-  $$\text{Actual Liquid Money} = \sum_{\text{Included Bank Balances}} - \sum_{\text{Included Credit Card Dues}}$$
-- 🙈 **Account Hiding**: Toggle `include_in_net_worth = false` on accounts (like your Emergency Fund) so they don't skew your daily liquid cash calculations.
-- ⚡ **Automated Balance Engine**: Logging an expense or income transaction automatically updates target bank balances or credit card dues in real-time.
-- 🔀 **Inter-Account Transfers & Bill Payments**: Transfer funds between accounts (e.g. pay off your Credit Card bill from your Bank Account with 1 API call).
-- 🏷️ **Paisa-Style Categories**: Pre-seeded Income (`Salary`, `Side Hustle`, `Freelance`) vs Expense (`Food`, `Fuel`, `Rent`, `Utilities`, `Shopping`) categories + custom user category creation.
-- 📊 **Monthly Savings & Spending Analytics**: Real-time spending percentages and monthly net savings rate.
-- 🛡️ **1000% Quality Standards**: 27 automated tests with in-memory SQLite isolation cataloged in [`TESTCASES.md`](TESTCASES.md).
-
----
-
-## 🚀 Interactive API Docs
-
-Explore and test all live endpoints directly in your browser:
-👉 **[Live Swagger UI Documentation](https://expensify-api-fj8q.onrender.com/docs)**
+- 🔐 **Multi-User Auth**: Email/password sign-up & sign-in via Supabase Auth. JWT verified on FastAPI backend. Each user sees only their own data.
+- 🏦 **Multi-Account Management**: Bank accounts and credit cards in one dashboard.
+- 💡 **Actual Liquid Cash Calculation**:
+  $$\text{Actual Liquid Money} = \sum_{\text{Bank Balances}} - \sum_{\text{Credit Card Dues}}$$
+- 🙈 **Account Hiding**: Toggle `include_in_net_worth = false` to exclude accounts (e.g. Emergency Fund) from net worth.
+- ⚡ **Auto Balance Engine**: Logging a transaction automatically adjusts account balances in real-time.
+- 🔀 **Inter-Account Transfers**: Pay off Credit Card bills or move funds between accounts in one call.
+- 🏷️ **Categories**: Pre-seeded global defaults (Salary, Food, Rent, etc.) + user-created custom categories.
+- 📊 **Monthly Analytics**: Income vs Expense totals, net savings rate, category spending breakdown.
+- 📱 **Mobile-First Angular UI**: Slate dark theme, sticky app bar, glassmorphism cards, 24-hour time display.
 
 ---
 
-## 💡 Feature Showcase & Usage Examples
+## 🚀 Live Application
 
-### 1. Check Your Net Available Cash (`GET /api/v1/summary`)
-Returns your total liquid money after subtracting credit card dues and filtering out hidden accounts.
+👉 **[https://expensify-api-fj8q.onrender.com/](https://expensify-api-fj8q.onrender.com/)**
 
-```json
-// GET /api/v1/summary
-{
-  "total_bank_balance": 75000.0,
-  "total_credit_card_dues": 15000.0,
-  "actual_liquid_money": 60000.0,
-  "included_accounts_count": 2,
-  "excluded_accounts_count": 1,
-  "currency": "INR"
-}
+**API Docs (Swagger UI)** — click the green 🔓 **Authorize** button to test authenticated endpoints:
+👉 **[https://expensify-api-fj8q.onrender.com/docs](https://expensify-api-fj8q.onrender.com/docs)**
+
+---
+
+## 🔐 Auth Architecture
+
+```
+Angular (Browser)
+  │
+  ├── Supabase Auth SDK (anon public key)
+  │     └── signInWithPassword() → session + JWT access_token
+  │
+  ├── authInterceptor → Authorization: Bearer <jwt> on all API calls
+  │
+  └── FastAPI (Render)
+        └── get_current_user() → decodes JWT → auto-provisions user row
+              └── All DB queries filtered by user_id
 ```
 
 ---
 
-### 2. Log an Expense Transaction (`POST /api/v1/transactions`)
-Automatically deducts ₹450 from your Bank balance and logs the transaction.
+## 💡 API Usage Examples
 
+### Check Net Available Cash
+```bash
+curl -H "Authorization: Bearer <your_jwt>" \
+  https://expensify-api-fj8q.onrender.com/api/v1/summary
+```
 ```json
-// POST /api/v1/transactions
 {
-  "account_id": 1,
+  "total_bank_balance": 125000.0,
+  "total_credit_card_dues": 14500.0,
+  "actual_liquid_money": 110500.0,
+  "currency": "INR"
+}
+```
+
+### Log an Expense
+```json
+POST /api/v1/transactions
+{
+  "account_id": "<your_account_id>",
   "transaction_type": "expense",
   "amount": 450.0,
   "category": "food",
@@ -63,16 +79,12 @@ Automatically deducts ₹450 from your Bank balance and logs the transaction.
 }
 ```
 
----
-
-### 3. Pay Credit Card Bill / Inter-Account Transfer (`POST /api/v1/transfers`)
-Transfers ₹10,000 from Bank Account (ID 1) to Credit Card (ID 2). Automatically reduces your bank balance and pays off your credit card due!
-
+### Pay Credit Card Bill (Transfer)
 ```json
-// POST /api/v1/transfers
+POST /api/v1/transfers
 {
-  "from_account_id": 1,
-  "to_account_id": 2,
+  "from_account_id": "<bank_id>",
+  "to_account_id": "<credit_card_id>",
   "amount": 10000.0,
   "description": "July Credit Card Bill Payment"
 }
@@ -80,63 +92,51 @@ Transfers ₹10,000 from Bank Account (ID 1) to Credit Card (ID 2). Automaticall
 
 ---
 
-### 4. Category Spending Breakdown (`GET /api/v1/transactions/analytics/categories`)
-Groups expenses by category and returns spending percentages for charts.
-
-```json
-// GET /api/v1/transactions/analytics/categories
-{
-  "total_expense": 2000.0,
-  "categories": [
-    { "category": "food", "total_amount": 1000.0, "percentage": 50.0 },
-    { "category": "shopping", "total_amount": 1000.0, "percentage": 50.0 }
-  ]
-}
-```
-
----
-
-### 5. Monthly Savings Analytics (`GET /api/v1/analytics/monthly`)
-Tracks your monthly cash flow and savings rate.
-
-```json
-// GET /api/v1/analytics/monthly?year=2026&month=8
-{
-  "year": 2026,
-  "month": 8,
-  "total_income": 100000.0,
-  "total_expense": 40000.0,
-  "net_savings": 60000.0,
-  "savings_rate_percentage": 60.0
-}
-```
-
----
-
-## 🛠️ Local Setup & Testing
+## 🛠️ Local Setup
 
 ```bash
 # 1. Clone & activate virtual environment
 git clone https://github.com/ship-it-mathus/expensify.git
 cd expensify
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 
-# 2. Install dependencies
+# 2. Install Python dependencies
 pip install -r requirements.txt
 
-# 3. Run automated test suite (27 tests)
-pytest --cov=app --cov-report=term-missing
+# 3. Configure environment
+cp .env.example .env   # fill in DATABASE_URL, SUPABASE_URL, SUPABASE_SECRET
 
-# 4. Start local development server
-uvicorn app.main:app --reload
+# 4. Build Angular frontend
+cd frontend && npm ci && npx ng build
+cp -r dist/expensify-angular/browser/* ../app/static/
+cd ..
+
+# 5. Run unified server (Angular + API on single port)
+venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# 6. Run test suite (32 tests)
+venv/bin/pytest -q
 ```
 
 ---
 
-## 📖 Architecture & Documentation
+## 📐 Tech Stack
 
-- [`PROJECT.md`](PROJECT.md): Full technical specification & file mapping.
-- [`LEARNINGS.md`](LEARNINGS.md): Systems architecture, ASGI/Uvicorn, and connection pooling learnings.
-- [`STATUS.md`](STATUS.md): Persistent roadmap & deployment status tracker.
-- [`TESTCASES.md`](TESTCASES.md): 27 cataloged test cases with direct code links.
+| Layer | Technology |
+|---|---|
+| Frontend | Angular 18, TypeScript, Vanilla CSS |
+| Backend | FastAPI, Python 3.11, SQLAlchemy, Pydantic |
+| Auth | Supabase Auth (JWT), Angular authInterceptor |
+| Database | Supabase PostgreSQL (Transaction Pooler, port 6543) |
+| Containerization | Docker (multi-stage: Node 22 build → Python 3.11 serve) |
+| Hosting | Render (auto-deploy on `main` merge) |
+| IDs | ULID (universally unique, lexicographically sortable) |
+
+---
+
+## 📖 Documentation
+
+- [`STATUS.md`](STATUS.md) — Roadmap, milestones & deployment tracker
+- [`LEARNINGS.md`](LEARNINGS.md) — Engineering lessons (auth, async, Docker, SQLAlchemy)
+- [`PROJECT.md`](PROJECT.md) — Full technical specification & file map
+- [`TESTCASES.md`](TESTCASES.md) — 32 cataloged test cases with code links
