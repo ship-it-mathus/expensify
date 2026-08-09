@@ -38,11 +38,8 @@
           @if (activeTab() === 'history') { Transactions }
           @if (activeTab() === 'analytics') { Performance Analytics }
           @if (activeTab() === 'settings') { App Settings }
-          @if (activeTab() === 'new-transaction') { Log New Transaction }
+          @if (activeTab() === 'new-transaction') { {{ editingTxId() ? 'Edit Transaction' : 'Log New Transaction' }} }
         </h1>
-        <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 2px;">
-          Live Net Worth & Financial Tracking
-        </p>
       </div>
 
       <div class="actions-row">
@@ -66,10 +63,17 @@
             Transfer
           </button>
         } @else if (activeTab() === 'new-transaction') {
-          <button class="btn-secondary" (click)="setTab('overview')">
-            <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
-            Back to Dashboard
-          </button>
+          @if (editingTxId()) {
+            <button class="btn-secondary" (click)="setTab('history')">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+              Back to Transactions
+            </button>
+          } @else {
+            <button class="btn-secondary" (click)="setTab('overview')">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+              Back to Dashboard
+            </button>
+          }
         }
       </div>
     </div>
@@ -202,7 +206,7 @@
                     {{ acc.account_type === 'bank' ? 'account_balance' : 'credit_card' }}
                   </span>
                   {{ acc.name }}
-                  <span style="opacity: 0.8; font-size: 0.75rem; margin-left: 4px;">
+                  <span [style.color]="acc.account_type === 'bank' ? 'var(--accent-success)' : 'var(--accent-danger)'" style="font-size: 0.75rem; margin-left: 4px; font-weight: 700;">
                     ({{ acc.balance | currency:acc.currency:'symbol':'1.0-0' }})
                   </span>
                 </button>
@@ -215,7 +219,7 @@
           <!-- Amount -->
           <div>
             <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 8px;">Amount (₹)</label>
-            <input type="number" step="0.01" class="form-field" [(ngModel)]="newTxAmount" name="txAmount" placeholder="Enter amount (e.g. 500)" style="font-size: 1.2rem; font-weight: 700;" required>
+            <input type="number" step="0.01" class="form-field" [(ngModel)]="newTxAmount" name="txAmount" placeholder="Enter amount" style="font-size: 1.2rem; font-weight: 700;" required>
           </div>
 
           <!-- Description / Note -->
@@ -245,7 +249,7 @@
 
           <!-- Submit Buttons -->
           <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
-            <button type="button" class="btn-secondary" (click)="setTab('overview')">Cancel</button>
+            <button type="button" class="btn-secondary" (click)="editingTxId() ? setTab('history') : setTab('overview')">Cancel</button>
             <button type="submit" class="btn-primary" [disabled]="!newTxAccountId || !newTxAmount || newTxAmount <= 0 || !newTxCategory">
               <span class="material-symbols-outlined">check</span>
               {{ editingTxId() ? 'Update Transaction' : 'Log Transaction' }}
@@ -335,11 +339,11 @@
             <div (click)="editTransaction(tx)" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background-color: #0f172a; border-radius: 12px; border: var(--border-subtle); cursor: pointer; transition: border-color 0.15s ease;" class="tx-item-row">
               <div>
                 <div style="font-weight: 700; font-size: 0.95rem;">{{ tx.description || tx.category }}</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ tx.category | uppercase }} • {{ tx.date | date:'mediumDate' }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ tx.category | uppercase }} • {{ tx.date | date:'d MMM • HH:mm' }}</div>
               </div>
               <div style="display: flex; align-items: center; gap: 12px;">
                 <div style="font-size: 1.15rem; font-weight: 800;" [style.color]="tx.transaction_type === 'expense' ? 'var(--accent-danger)' : 'var(--accent-success)'">
-                  {{ tx.transaction_type === 'expense' ? '-' : '+' }}{{ tx.amount | currency:'INR' }}
+                  {{ tx.amount | currency:'INR' }}
                 </div>
                 <button (click)="$event.stopPropagation(); editTransaction(tx)" style="background: none; border: none; cursor: pointer; color: var(--text-muted);" title="Edit Transaction">
                   <span class="material-symbols-outlined" style="font-size: 1.1rem;">edit</span>
@@ -425,7 +429,7 @@
           <input type="text" class="form-field" [(ngModel)]="transferDescription" name="tDesc" placeholder="Note (e.g. Credit Card Payment)">
           <div style="display: flex; justify-content: flex-end; gap: 10px;">
             <button type="button" (click)="closeModals()" style="background: none; border: none; cursor: pointer; font-weight: 600; padding: 10px 14px; color: var(--text-muted);">Cancel</button>
-            <button type="submit" class="btn-primary">Execute Transfer</button>
+            <button type="submit" class="btn-primary" [disabled]="!transferFromId || !transferToId || !transferAmount || transferAmount <= 0 || transferFromId === transferToId">Execute Transfer</button>
           </div>
         </form>
       </div>

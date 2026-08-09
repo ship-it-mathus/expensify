@@ -94,29 +94,14 @@ export class App implements OnInit {
     this.newTxAmount = null;
     this.newTxDescription = '';
     this.newTxCategory = '';
+    this.newTxType = TransactionType.EXPENSE;
   }
 
   setTab(tab: 'overview' | 'settings' | 'history' | 'analytics' | 'new-transaction') {
+    if (tab !== 'new-transaction') {
+      this.resetTxForm();
+    }
     this.activeTab.set(tab);
-    if (tab === 'new-transaction') {
-      if (this.api.accounts().length > 0 && !this.newTxAccountId) {
-        this.newTxAccountId = this.api.accounts()[0].id;
-      }
-    } else {
-      this.resetTxForm();
-    }
-  }
-
-  openModal(type: 'tx' | 'transfer') {
-    if (type === 'tx') {
-      this.resetTxForm();
-      this.setTab('new-transaction');
-    }
-    if (type === 'transfer') this.isTransferModalOpen.set(true);
-  }
-
-  closeModals() {
-    this.isTransferModalOpen.set(false);
   }
 
   selectCategory(categoryName: string) {
@@ -127,51 +112,65 @@ export class App implements OnInit {
     this.newTxAccountId = accountId;
   }
 
-  async handleToggleExclusion(accId: string, currentStatus: boolean) {
-    await this.api.updateAccount(accId, { include_in_net_worth: !currentStatus });
-  }
-
-  async handleDeleteAccount(accId: string) {
-    if (!confirm('Delete this account?')) return;
-    await this.api.deleteAccount(accId);
-  }
-
   async handleCreateTransaction() {
-    if (!this.newTxAccountId || !this.newTxAmount || this.newTxAmount <= 0) return;
+    if (!this.newTxAccountId || !this.newTxAmount || this.newTxAmount <= 0 || !this.newTxCategory) return;
     
-    const txPayload = {
-      account_id: this.newTxAccountId,
-      transaction_type: this.newTxType,
-      amount: this.newTxAmount,
-      category: this.newTxCategory || 'General',
-      description: this.newTxDescription
-    };
+    try {
+      const payload = {
+        account_id: this.newTxAccountId,
+        transaction_type: this.newTxType,
+        amount: Number(this.newTxAmount),
+        category: this.newTxCategory,
+        description: this.newTxDescription || undefined
+      };
 
-    if (this.editingTxId()) {
-      await this.api.updateTransaction(this.editingTxId()!, txPayload);
-    } else {
-      await this.api.createTransaction(txPayload);
+      if (this.editingTxId()) {
+        await this.api.updateTransaction(this.editingTxId()!, payload);
+        this.setTab('history');
+      } else {
+        await this.api.createTransaction(payload);
+        this.setTab('overview');
+      }
+      this.resetTxForm();
+    } catch (err) {
+      console.error('Error logging transaction:', err);
     }
-
-    this.resetTxForm();
-    this.setTab('overview');
   }
 
-  async handleDeleteTx(txId: string) {
-    if (!confirm('Delete transaction?')) return;
-    await this.api.deleteTransaction(txId);
+  async handleDeleteTx(id: string) {
+    if (confirm('Are you sure you want to delete this transaction? Account balances will adjust automatically.')) {
+      await this.api.deleteTransaction(id);
+    }
+  }
+
+  async handleToggleExclusion(id: string, current: boolean) {
+    try {
+      await this.api.updateAccount(id, { include_in_net_worth: !current });
+    } catch (err) {
+      console.error('Error toggling account exclusion:', err);
+    }
+  }
+
+  openModal(modal: 'transfer') {
+    if (modal === 'transfer') this.isTransferModalOpen.set(true);
+  }
+
+  closeModals() {
+    this.isTransferModalOpen.set(false);
   }
 
   async handleCreateTransfer() {
-    if (!this.transferFromId || !this.transferToId || this.transferAmount <= 0) return;
-    await this.api.createTransfer({
-      from_account_id: this.transferFromId,
-      to_account_id: this.transferToId,
-      amount: this.transferAmount,
-      description: this.transferDescription
-    });
-    this.closeModals();
-    this.transferAmount = 0;
-    this.transferDescription = '';
+    if (!this.transferFromId || !this.transferToId || !this.transferAmount || this.transferAmount <= 0) return;
+    try {
+      await this.api.createTransfer({
+        from_account_id: this.transferFromId,
+        to_account_id: this.transferToId,
+        amount: Number(this.transferAmount),
+        description: this.transferDescription || undefined
+      });
+      this.closeModals();
+    } catch (err) {
+      console.error('Error executing transfer:', err);
+    }
   }
 }
