@@ -115,17 +115,6 @@
             </button>
           </form>
 
-          <div style="display: flex; align-items: center; gap: 12px; margin: 20px 0;">
-            <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
-            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">or</span>
-            <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
-          </div>
-
-          <button type="button" class="btn-secondary" (click)="handleGoogleLogin()" style="justify-content: center; width: 100%;">
-            <span class="material-symbols-outlined">account_circle</span>
-            Continue with Google
-          </button>
-
           <div style="text-align: center; margin-top: 20px; font-size: 0.88rem; color: var(--text-muted);">
             @if (authMode === 'login') {
               Don't have an account? <a (click)="authMode = 'signup'" style="color: var(--accent-primary); font-weight: 700; cursor: pointer;">Sign Up</a>

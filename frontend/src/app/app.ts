@@ -62,10 +62,6 @@ export class App implements OnInit {
     }
   }
 
-  async handleGoogleLogin() {
-    await this.auth.signInWithGoogle();
-  }
-
   async handleSignOut() {
     await this.auth.signOut();
     this.api.refreshAll();
