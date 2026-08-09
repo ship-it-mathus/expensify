@@ -2,7 +2,8 @@
 
 An asynchronous, cloud-ready REST API built with **FastAPI** and **Supabase (PostgreSQL)** for tracking accounts, credit card dues, income/expense transactions, custom categories, monthly analytics, inter-account transfers, and net available liquid money with custom account exclusion support.
 
-🌐 **Live Production API**: [https://expensify-api-fj8q.onrender.com/docs](https://expensify-api-fj8q.onrender.com/docs)  
+🌐 **Live Web Application**: [https://expensify-api-fj8q.onrender.com/](https://expensify-api-fj8q.onrender.com/)  
+🔌 **Live Production API Docs**: [https://expensify-api-fj8q.onrender.com/docs](https://expensify-api-fj8q.onrender.com/docs)  
 📦 **GitHub Repository**: [https://github.com/ship-it-mathus/expensify](https://github.com/ship-it-mathus/expensify)  
 🧪 **Test Matrix**: [`TESTCASES.md`](file:///Users/mathews/Projects/Expensify/TESTCASES.md)
 
