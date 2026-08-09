@@ -1,76 +1,130 @@
 # 📌 Expensify Project Status & Progress Tracker
 
-**Last Updated**: August 5, 2026  
-**Current Phase**: Phase 4 Complete (Paisa Features & 1000% Quality Test Suite) 🟢  
-**Next Phase**: Phase 5 (Mobile-First Web Dashboard / PWA) 🚀  
+**Last Updated**: August 10, 2026
+**Current Phase**: Phase 6 Complete (Multi-User Auth, Data Isolation & Production Fixes) 🟢
+**Next Phase**: Phase 7 (Credit cards, richer analytics, PWA polish) 🚀
 
 ---
 
 ## 🔗 Quick Links
 
 - **Live Web Application (Render)**: [https://expensify-api-fj8q.onrender.com/](https://expensify-api-fj8q.onrender.com/)
-- **Live Production API Docs (Render)**: [https://expensify-api-fj8q.onrender.com/docs](https://expensify-api-fj8q.onrender.com/docs)
+- **Live Production API Docs (Swagger UI)**: [https://expensify-api-fj8q.onrender.com/docs](https://expensify-api-fj8q.onrender.com/docs)
 - **GitHub Repository**: [https://github.com/ship-it-mathus/expensify](https://github.com/ship-it-mathus/expensify)
-- **Database**: Supabase PostgreSQL (Managed Cloud DB via Transaction Pooler)
-- **Test Matrix**: [`TESTCASES.md`](file:///Users/mathews/Projects/Expensify/TESTCASES.md) (27 cataloged test cases)
-- **Antigravity Quality Config**: [`.antigravity/instructions.md`](file:///Users/mathews/Projects/Expensify/.antigravity/instructions.md)
+- **Database**: Supabase PostgreSQL (Managed Cloud DB via Transaction Pooler port 6543)
+- **Auth Provider**: Supabase Auth (Email/Password; JWT verified on backend)
+- **Test Matrix**: [`TESTCASES.md`](./TESTCASES.md) (32 cataloged test cases, 32/32 passing)
+- **Antigravity Quality Config**: [`.antigravity/instructions.md`](./.antigravity/instructions.md)
 
 ---
 
 ## 🎯 Completed Milestones
 
 ### ✅ Phase 1: Local Backend & Business Logic
-- [x] FastAPI modular app architecture (`app/main.py`, `app/models.py`, `app/schemas.py`, `app/routers/accounts.py`).
-- [x] Implemented `GET /api/v1/summary` for net available liquid cash:
-  $$\text{Actual Liquid Money} = \sum_{\text{Bank Balances}} - \sum_{\text{Credit Card Dues}}$$
-- [x] Account exclusion support (`include_in_net_worth = false`) for hiding accounts (e.g., Emergency Fund).
+- [x] FastAPI modular app architecture (`app/main.py`, `app/models.py`, `app/schemas.py`, `app/routers/`).
+- [x] `GET /api/v1/summary` for net available liquid cash.
+- [x] Account exclusion support (`include_in_net_worth = false`).
 - [x] Full CRUD endpoints for Bank and Credit Card accounts.
 
 ### ✅ Phase 2: Cloud Database (Supabase)
-- [x] Connected FastAPI backend to Supabase PostgreSQL via Transaction Pooler (Port 6543).
-- [x] Auto-generated database tables in Supabase.
-- [x] Configured environment variables (`DATABASE_URL` in `.env`).
+- [x] Connected FastAPI to Supabase PostgreSQL via Transaction Pooler (Port 6543).
+- [x] Auto-generated database tables via SQLAlchemy `Base.metadata.create_all()`.
+- [x] Configured `DATABASE_URL` via environment variable (Render secret + local `.env`).
 
 ### ✅ Phase 3: Testing, Version Control & Production Deployment
-- [x] Built isolated automated test suite with **`pytest`** using in-memory SQLite fixtures (`conftest.py`).
-- [x] Configured Docker containerization (`Dockerfile`).
-- [x] Pushed source code to GitHub repository [`ship-it-mathus/expensify`](https://github.com/ship-it-mathus/expensify).
-- [x] Deployed live production container on Render (`expensify-api-fj8q.onrender.com`).
-- [x] Created comprehensive documentation: [`PROJECT.md`](file:///Users/mathews/Projects/Expensify/PROJECT.md) and [`LEARNINGS.md`](file:///Users/mathews/Projects/Expensify/LEARNINGS.md).
+- [x] Isolated automated test suite with **`pytest`** using in-memory SQLite fixtures.
+- [x] Docker containerization (`Dockerfile`) with multi-stage build.
+- [x] Deployed to Render — live at `expensify-api-fj8q.onrender.com`.
+- [x] GitHub repository with strict **Pull Request policy** (no direct pushes to `main`).
 
 ### ✅ Phase 4: Paisa Feature Parity & 1000% Quality Standard
-- [x] **Categories Management & Pre-seeding**: `GET /api/v1/categories` (filtered by `income` vs `expense`), custom category creation, default seed protection.
-- [x] **Account Specific Transactions**: `GET /api/v1/accounts/{id}/transactions`.
-- [x] **Monthly Analytics**: `GET /api/v1/analytics/monthly` (monthly income vs expense total, net savings rate, category breakdown).
-- [x] **Inter-Account Transfers**: `POST /api/v1/transfers` for bill payments & fund transfers.
-- [x] **1000% Quality Test Suite**: 27/27 passed tests with 98% code coverage.
-- [x] **Test Case Matrix (`TESTCASES.md`)**: Numbered test IDs (`TC-ROOT-001`, `TC-ACC-001` through `TC-ANA-002`) mapped to implementation links.
-- [x] **Antigravity Instructions**: Enforced workspace testing quality in [`.antigravity/instructions.md`](file:///Users/mathews/Projects/Expensify/.antigravity/instructions.md).
+- [x] Categories Management & Pre-seeding (income/expense filters, default seed guard).
+- [x] Monthly Analytics (`GET /api/v1/analytics/monthly`).
+- [x] Inter-Account Transfers (`POST /api/v1/transfers`) with auto balance adjustment.
+- [x] 27/27 test cases passing at 98% code coverage.
+
+### ✅ Phase 5: Angular Mobile-First Dashboard
+- [x] Full Angular 18 SPA frontend — transactions, accounts, analytics, categories.
+- [x] Slate dark theme UI with glassmorphism cards.
+- [x] Sticky top app bar, 24-hour time display, green/red account balance chips.
+- [x] Transfer modal with execute button disabled until all fields filled.
+- [x] Edit Transaction page with correct header, back button, and cancel routing.
+- [x] Amount display without `+`/`-` prefix; colour-coded green/red only.
+- [x] Single-port unified server: Angular SPA served by FastAPI static mount.
+
+### ✅ Phase 6: Multi-User Auth, Data Isolation & Production Fixes
+- [x] **Supabase Auth backend (PR #11)**: `User` model, `get_current_user` JWT dependency, auto-provisioning user rows on first login.
+- [x] **Angular Auth UI (PR #12)**: `AuthService` (signals), `authInterceptor` (Bearer token), Slate login/signup card.
+- [x] **Supabase anon public key (PR #18)**: Fixed "Forbidden use of secret API key in browser" error.
+- [x] **Google OAuth removed (PR #16, #21)**: Removed unused `handleGoogleLogin` and `signInWithGoogle` to keep codebase clean.
+- [x] **Node.js 22 Docker fix (PR #15)**: Upgraded Dockerfile Stage 1 to `node:22-slim` to meet Angular CLI minimum requirement.
+- [x] **Angular cache gitignored (PR #22)**: Added `frontend/.angular/` to `.gitignore` — permanently prevents PR merge conflicts on binary cache files.
+- [x] **Per-user data isolation (feat/user-data-isolation)**: All 4 routers (accounts, transactions, categories, analytics) now filter by `user_id`. Each user sees only their own data.
+- [x] **Categories scoping**: Global system defaults (no `user_id`) shown to all users; custom categories scoped to owner only.
+- [x] **Swagger UI Authorize button (PR #19)**: `HTTPBearer` security scheme registered — green 🔓 Authorize button in `/docs` for testing with JWT tokens.
+- [x] **Auth startup race condition fixed (fix/auth-race-condition-effect)**: Replaced `ngOnInit` synchronous check with Angular `effect()` — correctly loads data after Supabase session restores on page reload.
+- [x] **PostgreSQL schema migration**: Added `user_id VARCHAR(36)` columns to `accounts`, `transactions`, and `categories` tables in Supabase via `ALTER TABLE`.
+- [x] **32/32 tests passing**: Updated `conftest.py` to inject mock authenticated user via `get_current_user` dependency override.
 
 ---
 
-## 🔮 Upcoming Roadmap (Phase 5 Options)
+## 🔐 Auth Architecture
 
-### 📲 Option A: Mobile-First Web Dashboard (React + Vite PWA)
-- Progressive Web App that sits on your phone's home screen.
-- Paisa-style layout: Hero Net Worth section, Accounts Tab with account-specific transaction list, Income vs Expense category selection, and visual charts.
+```
+Browser (Angular)
+  │
+  ├── Supabase Auth JS SDK (anon public key: eyJhbGci...)
+  │     └── signInWithPassword() → returns session + JWT access_token
+  │
+  ├── authInterceptor → attaches Authorization: Bearer <jwt> to every API call
+  │
+  └── FastAPI Backend (Render)
+        └── get_current_user() dependency
+              ├── Extracts Bearer JWT
+              ├── Decodes sub (UUID) & email
+              ├── Auto-provisions User row in DB on first login
+              └── Returns User → all queries filtered by user.id
+```
 
-### 🔑 Option B: Authentication & Security
-- Implement API Key authentication (`X-API-KEY` header) or Supabase Auth / JWT for multi-device security.
+---
+
+## 🗃️ Database Schema (Supabase PostgreSQL)
+
+| Table | Key Columns | Notes |
+|---|---|---|
+| `users` | `id`, `email`, `full_name` | Auto-created on first JWT login |
+| `accounts` | `id`, `user_id`, `name`, `account_type`, `balance` | Scoped per user |
+| `transactions` | `id`, `user_id`, `account_id`, `amount`, `type`, `date` | Scoped per user |
+| `categories` | `id`, `user_id`, `name`, `category_type`, `is_default` | `user_id=NULL` = global default |
 
 ---
 
 ## 💻 Quick Reference Commands
 
-- **Run Dev Server Locally**:
-  ```bash
-  venv/bin/uvicorn app.main:app --reload
-  ```
-- **Run Test Suite & Coverage**:
-  ```bash
-  venv/bin/pytest --cov=app --cov-report=term-missing
-  ```
-- **Git Push Updates**:
-  ```bash
-  git add . && git commit -m "your message" && git push origin main
-  ```
+```bash
+# Run unified local server (single port, FastAPI + Angular SPA)
+venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# Build Angular production bundle
+cd frontend && npx ng build
+cp -r dist/expensify-angular/browser/* ../app/static/
+
+# Run test suite
+venv/bin/pytest -q
+
+# Git workflow (all changes via PR — no direct pushes to main)
+git checkout -b feat/your-feature
+git push -u origin feat/your-feature
+# → Open PR on GitHub → Merge
+```
+
+---
+
+## 🔮 Upcoming Roadmap (Phase 7 Options)
+
+- [ ] **Recurring Transactions**: Auto-log monthly salary/rent entries.
+- [ ] **Budget Limits per Category**: Alert when spending exceeds monthly budget.
+- [ ] **Charts & Visualisations**: Income vs Expense bar chart, Category pie chart.
+- [ ] **PWA Support**: `manifest.json` + service worker for phone home screen install.
+- [ ] **Email Confirmation Flow**: Currently auto-confirmed via admin API; add proper email verification.
+- [ ] **Password Reset**: Supabase magic link / OTP reset flow in the UI.

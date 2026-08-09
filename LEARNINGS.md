@@ -1,92 +1,165 @@
 # 🎓 Backend & Systems Architecture Learnings
 
-A comprehensive guide for Frontend Developers transitioning to Backend & Cloud Engineering, documented during the construction and deployment of the **Expensify API**.
+A living guide documenting key engineering lessons learned during the construction and deployment of **Expensify** — a full-stack personal finance tracker with FastAPI, Angular, Supabase, Docker, and Render.
 
 ---
 
 ## 1. Web Frameworks vs. Web Servers (FastAPI vs. Uvicorn)
 
-### 💡 Core Concept
-In Node.js/Express, the web server and application logic are often bundled together. In Python's modern async ecosystem, they are cleanly decoupled using **ASGI (Asynchronous Server Gateway Interface)**.
-
 ```
-[ Internet / HTTP ] ──► [ Uvicorn (ASGI Web Server) ] ──► [ FastAPI (Application Framework) ]
+[ Internet / HTTP ] ──► [ Uvicorn (ASGI Server) ] ──► [ FastAPI (App Framework) ]
 ```
 
-- **FastAPI (Application Framework)**:
-  - Writes business logic, routing, schema validation, and OpenAPI documentation.
-  - Does **NOT** handle raw TCP/HTTP network sockets directly.
-- **Uvicorn (ASGI Server)**:
-  - Listens on network ports (e.g. `8000`), manages TCP socket connections, parses incoming raw HTTP packets into standard Python data structures (ASGI events), hands them to FastAPI, and returns HTTP responses to clients.
+- **FastAPI**: Routes, business logic, schema validation, OpenAPI docs. Does NOT handle TCP sockets.
+- **Uvicorn**: Listens on ports, manages TCP connections, parses HTTP, hands off to FastAPI.
 
 ---
 
 ## 2. Request Lifecycle & Modular Layering
 
-A production-grade backend relies on **Separation of Concerns**:
-
 ```
-Client (Phone/Browser)
-  │
+Client (Browser/Phone)
   ▼
-[ main.py ] ──► CORS & App Router
-  │
+main.py (CORS + Router registration)
   ▼
-[ routers/accounts.py ] ──► Route Handlers & Math Logic
-  │                   │
-  │                   ├──► [ schemas.py ] (Validates Input & Formats Output)
-  │                   │
-  ▼                   ▼
-[ database.py ] ──► [ models.py ] (Translates Python Objects ◄► SQL Rows)
-  │
+routers/*.py (Route handlers, business logic)
+  ├── schemas.py (Pydantic: validates input, shapes output)
+  ├── auth.py (get_current_user JWT dependency)
+  └── models.py (SQLAlchemy: Python ↔ SQL rows)
   ▼
-[ PostgreSQL / Supabase ]
+database.py (get_db session lifecycle)
+  ▼
+Supabase PostgreSQL
 ```
-
-1. **`models.py` (SQLAlchemy)**: Defines database tables, data types, primary keys, and foreign keys.
-2. **`schemas.py` (Pydantic)**: Defines API payloads. Prevents internal database IDs/hashes from leaking, validates input types before execution.
-3. **`database.py` (Session Lifecycle)**: Provides thread-safe DB sessions (`get_db` dependency) that open per request and close automatically upon completion.
 
 ---
 
 ## 3. Database Connections & Connection Pooling
 
-### 🌐 Direct Connection vs. Connection Pooler
-Connecting a serverless/cloud backend to a relational database introduces connection overhead.
-
-- **Direct Connection (`db.[ref].supabase.co:5432`)**:
-  - Requires opening a persistent TCP connection per client.
-  - Direct hostnames are often **IPv6-only** in modern cloud infrastructure, failing on standard IPv4 networks without IPv6 support.
-- **Connection Pooler (`[region].pooler.supabase.com:6543`)**:
-  - Acts as a high-throughput proxy sitting in front of PostgreSQL.
-  - Accepts incoming IPv4 requests and reuses a small, pre-warmed pool of database connections.
-
-### 🔄 Session Pooling vs. Transaction Pooling
-- **Session Pooling**: A client reserves a DB connection for the entire duration of a session. Limited concurrent connections.
-- **Transaction Pooling (Port 6543)**: A client reserves a DB connection **only for the execution of a single SQL transaction** (e.g. 2 milliseconds) and immediately releases it back to the pool. Ideal for serverless APIs and mobile applications.
+- **Direct Connection (port 5432)**: IPv6-only on Supabase — fails on standard IPv4 networks.
+- **Transaction Pooler (port 6543)**: IPv4-compatible proxy. Reserves DB connection only for the duration of a single SQL transaction then releases it immediately. Ideal for serverless APIs.
 
 ---
 
-## 4. Row Level Security (RLS) vs. Database Owner
+## 4. Row Level Security (RLS) vs. Application-Level Isolation
 
-- **Supabase Data API (REST/JS SDK)**: Queries sent via client-side SDKs are evaluated through Supabase's PostgREST gateway, enforcing **Row Level Security (RLS)** rules.
-- **Direct SQL / SQLAlchemy (Port 6543)**: Backend servers connect using the database superuser connection string (`postgres`). Superuser SQL bypasses RLS policies, giving full read/write access.
-- **Dashboard Visibility**: Disabling RLS (`ALTER TABLE accounts DISABLE ROW LEVEL SECURITY;`) or adding default policies ensures data remains visible in the Supabase Table Editor UI without restrictions.
+Two different approaches to multi-tenancy:
 
----
+| Approach | Where enforced | How |
+|---|---|---|
+| **Supabase RLS** | PostgreSQL engine | `USING (user_id = auth.uid())` policies — enforced even for direct SQL |
+| **Application-level isolation** (our approach) | FastAPI routers | `filter(Account.user_id == current_user.id)` in every query |
 
-## 5. Automated Testing & In-Memory Database Isolation
-
-- **Test Isolation**: Never run automated test suites against production database instances.
-- **Dependency Overriding**: In FastAPI testing, we override the `get_db` dependency in `conftest.py` to point to a temporary `sqlite:///:memory:` database.
-- **Speed & Reliability**: 10 integration and unit tests run in **0.15 seconds**, ensuring instant feedback without network latency or state pollution.
+**Why we chose application-level**: Our backend uses the PostgreSQL superuser connection string (bypasses RLS by design). All data scoping is enforced in FastAPI router queries — every endpoint filters by the authenticated user's ID.
 
 ---
 
-## 6. Containerization & Cloud Deployment Architecture
+## 5. Supabase Auth: Secret Key vs. Anon Public Key
 
-- **`venv` vs. `Dockerfile`**:
-  - **Local (`venv`)**: Manages environment dependencies on the developer machine.
-  - **Cloud (`Dockerfile`)**: Package application logic, OS dependencies, and Python runtime into a reproducible container image.
-- **Environment Secret Isolation**: Production secrets (like `DATABASE_URL`) are never committed to version control (`.env` in `.gitignore`). Instead, they are injected at runtime via cloud platform environment settings (Render/Koyeb).
-- **Continuous Deployment (CD)**: Connecting Render to GitHub enables automated builds; every `git push` triggers container image rebuilds and deployment with zero manual intervention.
+| Key Type | Usage | Where |
+|---|---|---|
+| `sb_secret_...` (service_role) | Backend only — bypasses RLS, admin operations | FastAPI `app/config.py` via env var |
+| `eyJhbGci...` (anon public) | Frontend browser — safe to expose, rate-limited | Angular `auth.service.ts` |
+
+**Lesson**: Supabase blocks browser usage of the secret key with `"Forbidden use of secret API key in browser"`. Always use the `anon` public key in any client-side code.
+
+---
+
+## 6. JWT Authentication Flow (Supabase + FastAPI)
+
+```
+1. Angular calls supabase.auth.signInWithPassword()
+2. Supabase returns { session: { access_token: "eyJ..." } }
+3. authInterceptor attaches Authorization: Bearer <access_token> to all API calls
+4. FastAPI get_current_user() decodes JWT (without signature verification — Supabase handles that)
+5. Extracts sub (UUID) and email from JWT payload
+6. Auto-provisions User row in DB on first login
+7. All queries filtered by user.id → per-user data isolation
+```
+
+**Key insight**: `jwt.decode(token, options={"verify_signature": False})` is safe here because the JWT is already signed and verified by Supabase before being issued to the client. The backend trusts Supabase as the identity provider.
+
+---
+
+## 7. Angular Signals & Async Auth Race Condition
+
+**The Bug**: `ngOnInit()` is synchronous. Supabase `initAuth()` is async. On page reload:
+1. `ngOnInit()` runs → checks `isAuthenticated()` → `false` (session not loaded yet)
+2. `refreshAll()` is never called
+3. Dashboard shows 0 accounts even though user is logged in
+
+**The Fix**: Use Angular `effect()` instead — it reactively re-runs whenever a signal changes:
+```typescript
+constructor() {
+  effect(() => {
+    if (this.auth.isAuthenticated()) {
+      this.api.refreshAll();
+    }
+  });
+}
+```
+`effect()` fires again when `isAuthenticated` transitions from `false` → `true` (after Supabase resolves the stored session). Zero race condition.
+
+---
+
+## 8. Docker Multi-Stage Builds & Angular CLI Node Version
+
+**The Build Failure**:
+```
+The Angular CLI requires a minimum Node.js version of v22.22.3
+Node.js version v20.20.2 detected.
+```
+
+**The Fix**: Specify `node:22-slim` in Stage 1 of the Dockerfile. Angular 18+ requires Node 22+.
+
+**Lesson**: Always check the Angular CLI release notes for Node.js minimum version requirements before pinning a base image.
+
+---
+
+## 9. Git Angular Cache Merge Conflicts
+
+`frontend/.angular/cache/` contains binary lock files and TypeScript build snapshots that change with every local `ng build`. Tracking these in git causes near-guaranteed merge conflicts on every PR.
+
+**Fix**: Add `frontend/.angular/` to `.gitignore` and `git rm -rf --cached frontend/.angular/` to untrack.
+
+---
+
+## 10. Automated Testing with Auth Dependencies
+
+When endpoints require authentication (`get_current_user` dependency), tests will return `401 Unauthorized` unless the dependency is overridden.
+
+**Pattern for FastAPI test auth override**:
+```python
+def override_get_current_user():
+    return db_session.query(User).filter(User.id == TEST_USER_ID).first()
+
+app.dependency_overrides[get_current_user] = override_get_current_user
+```
+
+**Critical detail**: Always return a **fresh DB-bound instance** from the session (not a detached Python object). Returning a detached `User` object causes `sqlalchemy.orm.exc.DetachedInstanceError` when SQLAlchemy tries to lazy-load relationships.
+
+---
+
+## 11. Supabase Storage Budget (500 MB Free Tier)
+
+- ~50 MB is consumed by the Supabase engine baseline (`auth`, `storage`, `vault` schemas + extensions).
+- ~450 MB remains for user data.
+- A text transaction record is ~400 bytes → ~1,125,000 transactions fit in the remaining budget.
+- For 1–3 users with normal usage (~500 transactions/month each), the free tier lasts **62+ years**.
+
+---
+
+## 12. Supabase User Provisioning Pattern
+
+Supabase manages auth in its own `auth.users` table. Our app maintains a separate `public.users` table. The `get_current_user` dependency bridges these:
+
+```python
+user = db.query(User).filter(User.id == user_id).first()
+if not user:
+    # First login — auto-provision row in public.users
+    user = User(id=user_id, email=email)
+    db.add(user)
+    db.commit()
+```
+
+This means a user's app data (accounts, transactions) is only accessible after their first authenticated API call, not at the moment of Supabase sign-up.
