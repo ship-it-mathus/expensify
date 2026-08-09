@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ExpensifyApiService } from './services/api.service';
 import { AccountType, Transaction, TransactionType } from './models/expensify.models';
 import { AuthService } from './services/auth.service';
+import { DonutChartComponent, BarChartComponent } from './components/charts.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DonutChartComponent, BarChartComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -49,6 +50,22 @@ export class App implements OnInit {
   transferToId = '';
   transferAmount = 0;
   transferDescription = '';
+
+  // ── Chart Data Getters ──────────────────────────────
+  get donutLabels(): string[] {
+    return (this.api.analytics()?.categories ?? []).map(c =>
+      c.category.charAt(0).toUpperCase() + c.category.slice(1)
+    );
+  }
+
+  get donutValues(): number[] {
+    return (this.api.analytics()?.categories ?? []).map(c => c.total_amount);
+  }
+
+  get currentMonthLabel(): string {
+    const now = new Date();
+    return now.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
 
   ngOnInit() {}
 

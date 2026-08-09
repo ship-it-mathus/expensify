@@ -354,25 +354,68 @@
     <!-- 5. ANALYTICS TAB -->
     @if (activeTab() === 'analytics') {
       <div class="base-grid">
-        <div class="base-card" style="grid-column: 1 / -1;">
-          <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Monthly Savings Performance</span>
-          <h2 style="font-size: 3rem; font-weight: 800; margin-top: 4px; color: var(--accent-primary);">
-            {{ api.analytics()?.savings_rate_percentage || 0 }}% Savings Rate
-          </h2>
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-top: 14px;">
-            <div style="background: #0f172a; padding: 16px; border-radius: 12px; border: var(--border-subtle);">
-              <div style="font-size: 0.75rem; color: var(--text-muted);">Total Income</div>
-              <div style="font-size: 1.3rem; font-weight: 800; color: var(--accent-success); margin-top: 2px;">{{ (api.analytics()?.total_income || 0) | currency:'INR' }}</div>
+        <!-- ── Savings Rate Hero ── -->
+        <div class="base-card" style="grid-column: 1 / -1; text-align: center;">
+          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">{{ currentMonthLabel }} · Savings Performance</span>
+          <h2 style="font-size: 3.2rem; font-weight: 900; margin: 6px 0 4px; color: var(--accent-primary);">
+            {{ api.analytics()?.savings_rate_percentage || 0 }}%
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Savings Rate</p>
+
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px;">
+            <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); padding: 14px; border-radius: 12px;">
+              <div style="font-size: 0.72rem; color: #10b981; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Income</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #10b981; margin-top: 4px;">{{ (api.analytics()?.total_income || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
             </div>
-            <div style="background: #0f172a; padding: 16px; border-radius: 12px; border: var(--border-subtle);">
-              <div style="font-size: 0.75rem; color: var(--text-muted);">Total Expense</div>
-              <div style="font-size: 1.3rem; font-weight: 800; color: var(--accent-danger); margin-top: 2px;">{{ (api.analytics()?.total_expense || 0) | currency:'INR' }}</div>
+            <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); padding: 14px; border-radius: 12px;">
+              <div style="font-size: 0.72rem; color: #ef4444; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Expense</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #ef4444; margin-top: 4px;">{{ (api.analytics()?.total_expense || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
+            </div>
+            <div style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.25); padding: 14px; border-radius: 12px;">
+              <div style="font-size: 0.72rem; color: #6366f1; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Saved</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #6366f1; margin-top: 4px;">{{ (api.analytics()?.net_savings || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
             </div>
           </div>
         </div>
+
+        <!-- ── Bar Chart: Income vs Expense vs Savings ── -->
+        <div class="base-card" style="grid-column: 1 / -1;">
+          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: block; margin-bottom: 16px;">Monthly Breakdown</span>
+          <app-bar-chart
+            [income]="api.analytics()?.total_income || 0"
+            [expense]="api.analytics()?.total_expense || 0"
+            [savings]="api.analytics()?.net_savings || 0"
+            [monthLabel]="currentMonthLabel">
+          </app-bar-chart>
+        </div>
+
+        <!-- ── Donut Chart: Category Spending ── -->
+        <div class="base-card" style="grid-column: 1 / -1;">
+          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: block; margin-bottom: 16px;">Spending by Category</span>
+          <app-donut-chart
+            [labels]="donutLabels"
+            [values]="donutValues">
+          </app-donut-chart>
+
+          <!-- Category list with amounts -->
+          @if ((api.analytics()?.categories?.length || 0) > 0) {
+            <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+              @for (cat of api.analytics()?.categories || []; track cat.category) {
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--accent-primary); flex-shrink: 0;"></div>
+                  <span style="flex: 1; font-size: 0.85rem; color: var(--text-secondary); text-transform: capitalize;">{{ cat.category }}</span>
+                  <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-danger);">{{ cat.total_amount | currency:'INR':'symbol':'1.0-0' }}</span>
+                  <span style="font-size: 0.78rem; color: var(--text-muted); min-width: 42px; text-align: right;">{{ cat.percentage }}%</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
       </div>
     }
+
   }
   </main>
 
