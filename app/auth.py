@@ -1,12 +1,17 @@
 from typing import Optional, Union
 import jwt
 from fastapi import Depends, HTTPException, Header, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from app.config import settings
 
+# HTTPBearer security scheme registers the Authorize button in Swagger UI (/docs)
+security = HTTPBearer(auto_error=False)
+
 def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     authorization: Optional[str] = Header(None),
     x_user_id: Optional[str] = Header(None),
     db: Session = Depends(get_db)
@@ -25,13 +30,18 @@ def get_current_user(
 
     user_id: Optional[str] = None
     email: Optional[str] = None
+    token: Optional[str] = None
+
+    if isinstance(credentials, HTTPAuthorizationCredentials) and credentials.credentials:
+        token = credentials.credentials
+    elif authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
 
     # Dev fallback header
     if x_user_id:
         user_id = x_user_id
         email = f"{x_user_id}@expensify.local"
-    elif authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
+    elif token:
         try:
             payload = jwt.decode(token, options={"verify_signature": False})
             user_id = payload.get("sub") or payload.get("user_id")
