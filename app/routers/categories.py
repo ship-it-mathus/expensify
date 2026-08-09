@@ -1,9 +1,11 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
 from app.database import get_db
-from app.models import Category, TransactionType
+from app.models import Category, TransactionType, User
+from app.auth import get_current_user
 from app.schemas import CategoryCreate, CategoryResponse
 
 router = APIRouter(prefix="/api/v1", tags=["Categories Management"])
@@ -31,10 +33,10 @@ DEFAULT_CATEGORIES = [
 def seed_default_categories(db: Session):
     """
     Utility function to automatically seed Paisa system default categories
-    (with `is_default = True`) if the categories table is currently empty.
+    (with `is_default = True`) if no default categories exist yet.
     ULIDs are auto-generated for each category during creation.
     """
-    count = db.query(Category).count()
+    count = db.query(Category).filter(Category.is_default == True, Category.user_id == None).count()
     if count == 0:
         for cat in DEFAULT_CATEGORIES:
             db.add(Category(**cat))
@@ -47,16 +49,27 @@ def seed_default_categories(db: Session):
 )
 def list_categories(
     category_type: Optional[TransactionType] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user)
 ):
     """
-    Returns all categories. Order prioritizes default categories first (`is_default DESC`),
-    followed alphabetically by category name (`name ASC`).
+    Returns system default categories plus the authenticated user's custom categories.
+    Order prioritizes default categories first, followed alphabetically by category name.
     """
     seed_default_categories(db)
-    query = db.query(Category)
+
+    if current_user:
+        # Return global defaults (user_id IS NULL) + user's own custom categories
+        query = db.query(Category).filter(
+            or_(Category.user_id == None, Category.user_id == current_user.id)
+        )
+    else:
+        # Unauthenticated: return only global defaults
+        query = db.query(Category).filter(Category.user_id == None)
+
     if category_type is not None:
         query = query.filter(Category.category_type == category_type)
+
     return query.order_by(Category.is_default.desc(), Category.name.asc()).all()
 
 @router.post(
@@ -67,17 +80,23 @@ def list_categories(
 )
 def create_category(
     category_in: CategoryCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user)
 ):
     """
-    Creates a user custom category. All user-created categories are initialized
-    with `is_default = False` so they can be managed or deleted by the user.
+    Creates a user custom category scoped to the authenticated user.
+    All user-created categories are initialized with `is_default = False`.
     """
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+
     seed_default_categories(db)
-    # Prevent duplicate category names under the same category type (income vs expense)
+
+    # Prevent duplicate category names for this specific user (or global defaults)
     existing = db.query(Category).filter(
         Category.name.ilike(category_in.name),
-        Category.category_type == category_in.category_type
+        Category.category_type == category_in.category_type,
+        or_(Category.user_id == None, Category.user_id == current_user.id)
     ).first()
     if existing:
         raise HTTPException(
@@ -89,7 +108,8 @@ def create_category(
         name=category_in.name.strip(),
         category_type=category_in.category_type,
         icon=category_in.icon or "tag",
-        is_default=False  # User-created custom categories are never system defaults
+        is_default=False,
+        user_id=current_user.id
     )
     db.add(db_cat)
     db.commit()
@@ -103,30 +123,27 @@ def create_category(
 )
 def delete_category(
     category_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user)
 ):
     """
-    Deletes a custom category.
-    
-    SAFETY CHECK (`is_default` Guard Rail):
-    Blocks deletion of system default categories (`is_default = True`) with HTTP 400.
-    Only user-created custom categories (`is_default = False`) can be deleted.
+    Deletes a custom category owned by the authenticated user.
+    Blocks deletion of system default categories.
     """
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+
     cat = db.query(Category).filter(Category.id == category_id).first()
     if not cat:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category with ID {category_id} not found"
-        )
-    
-    # Block deletion if it's a pre-seeded system default category
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Category with ID {category_id} not found")
+
     if cat.is_default:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete system default categories"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete system default categories")
+
+    # Only allow deletion of user's own categories
+    if cat.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot delete another user's category")
 
     db.delete(cat)
     db.commit()
     return None
-
