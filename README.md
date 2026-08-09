@@ -7,6 +7,7 @@
 [![Database](https://img.shields.io/badge/Database-Supabase_PostgreSQL-blue)](https://supabase.com)
 [![Tests](https://img.shields.io/badge/Tests-32_Passed-success)](TESTCASES.md)
 [![Auth](https://img.shields.io/badge/Auth-Supabase_JWT-orange)](https://supabase.com/docs/guides/auth)
+[![Changelog](https://img.shields.io/badge/Changelog-CHANGELOG.md-lightgrey)](CHANGELOG.md)
 
 ---
 
@@ -140,3 +141,4 @@ venv/bin/pytest -q
 - [`LEARNINGS.md`](LEARNINGS.md) — Engineering lessons (auth, async, Docker, SQLAlchemy)
 - [`PROJECT.md`](PROJECT.md) — Full technical specification & file map
 - [`TESTCASES.md`](TESTCASES.md) — 32 cataloged test cases with code links
+- [`CHANGELOG.md`](CHANGELOG.md) — Full PR-by-PR code change history

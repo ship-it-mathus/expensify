@@ -14,6 +14,7 @@
 - **Database**: Supabase PostgreSQL (Managed Cloud DB via Transaction Pooler port 6543)
 - **Auth Provider**: Supabase Auth (Email/Password; JWT verified on backend)
 - **Test Matrix**: [`TESTCASES.md`](./TESTCASES.md) (32 cataloged test cases, 32/32 passing)
+- **Changelog**: [`CHANGELOG.md`](./CHANGELOG.md) (full PR-by-PR history)
 - **Antigravity Quality Config**: [`.antigravity/instructions.md`](./.antigravity/instructions.md)
 
 ---
@@ -120,11 +121,22 @@ git push -u origin feat/your-feature
 
 ---
 
-## 🔮 Upcoming Roadmap (Phase 7 Options)
+### ✅ Phase 7: Charts & Analytics Visualisations
+- [x] **Chart.js integration**: Installed `chart.js@4.5.1` in Angular frontend.
+- [x] **Bar Chart**: Monthly Income vs Expense vs Net Savings — 3 grouped coloured bars.
+- [x] **Donut Chart**: Category spending breakdown with percentage labels and colour-coded legend.
+- [x] **Savings Rate Hero**: Redesigned hero card with 3 coloured mini-tiles (green Income / red Expense / purple Saved).
+- [x] **Category breakdown list**: Below the donut — each category with ₹ amount and % right-aligned.
+- [x] **CHANGELOG.md**: Full PR-by-PR code changelog created.
+- [x] **Rule enforced**: Docs (STATUS, README, LEARNINGS, CHANGELOG) updated with every PR going forward.
+
+---
+
+## 🔮 Upcoming Roadmap (Phase 8 Options)
 
 - [ ] **Recurring Transactions**: Auto-log monthly salary/rent entries.
 - [ ] **Budget Limits per Category**: Alert when spending exceeds monthly budget.
-- [ ] **Charts & Visualisations**: Income vs Expense bar chart, Category pie chart.
+- [ ] **Multi-Month Trend Chart**: Line chart showing income/expense trend over last 6 months.
 - [ ] **PWA Support**: `manifest.json` + service worker for phone home screen install.
-- [ ] **Email Confirmation Flow**: Currently auto-confirmed via admin API; add proper email verification.
+- [ ] **Email Confirmation Flow**: Proper sign-up email verification instead of admin-confirming.
 - [ ] **Password Reset**: Supabase magic link / OTP reset flow in the UI.
