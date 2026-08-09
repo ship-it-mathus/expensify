@@ -16,10 +16,23 @@ class TransactionType(str, enum.Enum):
     INCOME = "income"
     EXPENSE = "expense"
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(String(36), primary_key=True, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    full_name = Column(String(100), nullable=True)
+    avatar_url = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    accounts = relationship("Account", back_populates="user", cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
+
 class Account(Base):
     __tablename__ = "accounts"
 
     id = Column(String(26), primary_key=True, index=True, default=generate_ulid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     name = Column(String(100), nullable=False)
     account_type = Column(Enum(AccountType), nullable=False, default=AccountType.BANK)
     balance = Column(Float, nullable=False, default=0.0)
@@ -33,23 +46,17 @@ class Account(Base):
         onupdate=lambda: datetime.now(timezone.utc)
     )
 
+    user = relationship("User", back_populates="accounts")
     transactions = relationship("Transaction", back_populates="account", cascade="all, delete-orphan")
 
 class Category(Base):
-    """
-    Financial Category Model.
-    
-    `is_default` Flag Explanation:
-    - True  = System pre-seeded default category (e.g. Salary, Food, Rent). Protected from deletion.
-    - False = User-created custom category (e.g. Crypto, Gaming). Can be deleted by user.
-    """
     __tablename__ = "categories"
 
     id = Column(String(26), primary_key=True, index=True, default=generate_ulid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     name = Column(String(50), nullable=False, index=True)
     category_type = Column(Enum(TransactionType), nullable=False, index=True)
     icon = Column(String(50), nullable=True)
-    # is_default=True for system pre-seeded default categories; False for custom user categories
     is_default = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -57,6 +64,7 @@ class Transaction(Base):
     __tablename__ = "transactions"
 
     id = Column(String(26), primary_key=True, index=True, default=generate_ulid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     account_id = Column(String(26), ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, index=True)
     transaction_type = Column(Enum(TransactionType), nullable=False, default=TransactionType.EXPENSE)
     amount = Column(Float, nullable=False)
@@ -70,4 +78,5 @@ class Transaction(Base):
         onupdate=lambda: datetime.now(timezone.utc)
     )
 
+    user = relationship("User", back_populates="transactions")
     account = relationship("Account", back_populates="transactions")
