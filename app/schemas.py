@@ -66,6 +66,14 @@ class TransactionBase(BaseModel):
 class TransactionCreate(TransactionBase):
     pass
 
+class TransactionUpdate(BaseModel):
+    account_id: Optional[str] = None
+    transaction_type: Optional[TransactionType] = None
+    amount: Optional[float] = Field(default=None, gt=0)
+    category: Optional[str] = None
+    description: Optional[str] = None
+    date: Optional[datetime] = None
+
 class TransactionResponse(TransactionBase):
     id: str
     created_at: datetime

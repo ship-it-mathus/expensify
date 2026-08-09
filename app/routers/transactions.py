@@ -8,6 +8,7 @@ from app.database import get_db
 from app.models import Account, AccountType, Transaction, TransactionType
 from app.schemas import (
     TransactionCreate,
+    TransactionUpdate,
     TransactionResponse,
     CategoryBreakdownResponse,
     CategoryItem,
@@ -246,6 +247,55 @@ def get_transaction(transaction_id: str, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Transaction with ID {transaction_id} not found"
         )
+    return tx
+
+@router.patch(
+    "/transactions/{transaction_id}",
+    response_model=TransactionResponse,
+    summary="Update Transaction (Adjusts Account Balances)"
+)
+def update_transaction(
+    transaction_id: str,
+    update_in: TransactionUpdate,
+    db: Session = Depends(get_db)
+):
+    tx = db.query(Transaction).filter(Transaction.id == transaction_id).first()
+    if not tx:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Transaction with ID {transaction_id} not found"
+        )
+
+    # 1. Revert original balance adjustment on old account
+    old_account = db.query(Account).filter(Account.id == tx.account_id).first()
+    if old_account:
+        adjust_account_balance(old_account, tx.amount, tx.transaction_type, is_reversal=True)
+
+    # Update fields
+    if update_in.account_id is not None:
+        tx.account_id = update_in.account_id
+    if update_in.transaction_type is not None:
+        tx.transaction_type = update_in.transaction_type
+    if update_in.amount is not None:
+        tx.amount = update_in.amount
+    if update_in.category is not None:
+        tx.category = update_in.category
+    if update_in.description is not None:
+        tx.description = update_in.description
+    if update_in.date is not None:
+        tx.date = update_in.date
+
+    # 2. Apply new balance adjustment on target account
+    new_account = db.query(Account).filter(Account.id == tx.account_id).first()
+    if not new_account:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Account with ID {tx.account_id} not found"
+        )
+    adjust_account_balance(new_account, tx.amount, tx.transaction_type, is_reversal=False)
+
+    db.commit()
+    db.refresh(tx)
     return tx
 
 @router.delete(
