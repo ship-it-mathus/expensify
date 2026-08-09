@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import extract, func
 
 from app.database import get_db
-from app.models import Transaction, TransactionType
+from app.models import Transaction, TransactionType, User
+from app.auth import get_current_user
 from app.schemas import MonthlyAnalyticsResponse, CategoryItem
 
 router = APIRouter(prefix="/api/v1", tags=["Analytics & Insights"])
@@ -18,14 +19,19 @@ router = APIRouter(prefix="/api/v1", tags=["Analytics & Insights"])
 def get_monthly_analytics(
     year: Optional[int] = None,
     month: Optional[int] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user)
 ):
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+
     now = datetime.now(timezone.utc)
     target_year = year or now.year
     target_month = month or now.month
 
-    # 1. Total Income
+    # 1. Total Income for this user
     income_query = db.query(func.sum(Transaction.amount)).filter(
+        Transaction.user_id == current_user.id,
         Transaction.transaction_type == TransactionType.INCOME,
         Transaction.category != "transfer",
         extract("year", Transaction.date) == target_year,
@@ -33,8 +39,9 @@ def get_monthly_analytics(
     ).scalar()
     total_income = float(income_query) if income_query else 0.0
 
-    # 2. Total Expense
+    # 2. Total Expense for this user
     expense_query = db.query(func.sum(Transaction.amount)).filter(
+        Transaction.user_id == current_user.id,
         Transaction.transaction_type == TransactionType.EXPENSE,
         Transaction.category != "transfer",
         extract("year", Transaction.date) == target_year,
@@ -46,11 +53,12 @@ def get_monthly_analytics(
     net_savings = total_income - total_expense
     savings_rate = round((net_savings / total_income) * 100, 2) if total_income > 0 else 0.0
 
-    # 4. Category Breakdown for the Month
+    # 4. Category Breakdown for the Month for this user
     cat_query = db.query(
         Transaction.category,
         func.sum(Transaction.amount).label("cat_total")
     ).filter(
+        Transaction.user_id == current_user.id,
         Transaction.transaction_type == TransactionType.EXPENSE,
         Transaction.category != "transfer",
         extract("year", Transaction.date) == target_year,
