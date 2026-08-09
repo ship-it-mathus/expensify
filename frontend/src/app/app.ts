@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpensifyApiService } from './services/api.service';
 import { AccountType, Transaction, TransactionType } from './models/expensify.models';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -13,10 +14,17 @@ import { AccountType, Transaction, TransactionType } from './models/expensify.mo
 })
 export class App implements OnInit {
   api = inject(ExpensifyApiService);
+  auth = inject(AuthService);
   TxType = TransactionType;
 
   // Active Tab Signal
   activeTab = signal<'overview' | 'settings' | 'history' | 'analytics' | 'new-transaction'>('overview');
+
+  // Auth Form Models
+  authEmail = '';
+  authPassword = '';
+  authMode: 'login' | 'signup' = 'login';
+  isAuthSubmitting = signal<boolean>(false);
 
   // Modal Signals
   isTransferModalOpen = signal<boolean>(false);
@@ -34,6 +42,32 @@ export class App implements OnInit {
   transferDescription = '';
 
   ngOnInit() {
+    this.api.refreshAll();
+  }
+
+  async handleAuthSubmit() {
+    if (!this.authEmail || !this.authPassword) return;
+    this.isAuthSubmitting.set(true);
+    try {
+      if (this.authMode === 'signup') {
+        await this.auth.signUp(this.authEmail, this.authPassword);
+      } else {
+        await this.auth.signIn(this.authEmail, this.authPassword);
+      }
+      await this.api.refreshAll();
+    } catch (err) {
+      console.error('Auth error:', err);
+    } finally {
+      this.isAuthSubmitting.set(false);
+    }
+  }
+
+  async handleGoogleLogin() {
+    await this.auth.signInWithGoogle();
+  }
+
+  async handleSignOut() {
+    await this.auth.signOut();
     this.api.refreshAll();
   }
 
