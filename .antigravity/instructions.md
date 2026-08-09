@@ -8,7 +8,7 @@
 - **DB Isolation**: Tests must run against isolated in-memory SQLite fixtures (`conftest.py`). Never touch production database in unit tests.
 - **Zero Warning & High Coverage Policy**: All tests must run warning-free with high test coverage (`pytest --cov=app`).
 
-## 2. Git & Branch Protection Workflow (PR Required)
-- **Branch Protection Active**: Direct pushes to `main` branch are blocked on GitHub.
-- **Feature Branch Workflow**: All new features must be developed on a dedicated feature branch (e.g., `feature/<name>`).
-- **Pull Request Protocol**: Pushes must target `origin feature/<name>`, followed by opening a Pull Request on GitHub for review and merging into `main`.
+## 2. Mandatory Git & Branch Protection Protocol (PR Required - NO DIRECT MAIN PUSHES)
+- **Strict Pull Request Protocol**: NEVER push directly to `main` or bypass branch protection rules, even with admin credentials.
+- **Feature Branch Mandate**: All features, bug fixes, and layout tweaks MUST be committed to dedicated feature branches (e.g. `feat/<name>`).
+- **Pull Request Link Delivery**: Every update MUST be pushed to `origin feat/<name>` and presented to the user as a clickable GitHub Pull Request link for user review and merging into `main`.
