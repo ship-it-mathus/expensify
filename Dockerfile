@@ -1,25 +1,35 @@
-# Use official lightweight Python image
-FROM python:3.11-slim
+# ==========================================
+# STAGE 1: Build Angular Frontend with Node
+# ==========================================
+FROM node:20-slim AS frontend-builder
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ .
+RUN npx ng build
 
-# Set environment variables
+# ==========================================
+# STAGE 2: Serve Full-Stack App with Python
+# ==========================================
+FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-
-# Set work directory
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install psycopg2-binary
 
-# Copy project files
+# Copy backend codebase
 COPY . .
 
-# Expose port 8000
+# Copy built Angular static bundle into app/static/
+COPY --from=frontend-builder /frontend/dist/expensify-angular/browser ./app/static
+
 EXPOSE 8000
 
 # Run uvicorn server with dynamic PORT support for Render
