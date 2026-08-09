@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpensifyApiService } from './services/api.service';
@@ -16,6 +16,15 @@ export class App implements OnInit {
   api = inject(ExpensifyApiService);
   auth = inject(AuthService);
   TxType = TransactionType;
+
+  constructor() {
+    // Reactively load data whenever auth state changes (handles page reload with existing session)
+    effect(() => {
+      if (this.auth.isAuthenticated()) {
+        this.api.refreshAll();
+      }
+    });
+  }
 
   // Active Tab Signal
   activeTab = signal<'overview' | 'settings' | 'history' | 'analytics' | 'new-transaction'>('overview');
@@ -41,11 +50,7 @@ export class App implements OnInit {
   transferAmount = 0;
   transferDescription = '';
 
-  ngOnInit() {
-    if (this.auth.isAuthenticated()) {
-      this.api.refreshAll();
-    }
-  }
+  ngOnInit() {}
 
   async handleAuthSubmit() {
     if (!this.authEmail || !this.authPassword) return;
