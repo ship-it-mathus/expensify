@@ -6,10 +6,10 @@ This file catalogs every unit and integration test case implemented in the Expen
 
 ## 📊 Test Execution Summary
 
-- **Total Test Cases**: 29
-- **Pass Rate**: 100% (29/29 Passed)
+- **Total Test Cases**: 32
+- **Pass Rate**: 100% (32/32 Passed)
 - **Code Coverage**: 99%
-- **Execution Time**: ~0.50 seconds
+- **Execution Time**: ~0.42 seconds
 
 ---
 
@@ -85,3 +85,13 @@ This file catalogs every unit and integration test case implemented in the Expen
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `TC-ANA-001` | Monthly Analytics Empty State | Returns 0.0 income/expense/savings for month with no transactions. | `GET /api/v1/analytics/monthly` | `200 OK` | [`test_tc_ana_001_monthly_analytics_empty_state`](file:///Users/mathews/Projects/Expensify/tests/test_analytics.py#L1-L10) |
 | `TC-ANA-002` | Income vs Expense Savings Rate | Calculates total income, total expense, net savings, and savings rate percentage. | `GET /api/v1/analytics/monthly` | `200 OK` | [`test_tc_ana_002_monthly_analytics_income_expense_savings`](file:///Users/mathews/Projects/Expensify/tests/test_analytics.py#L12-L34) |
+
+---
+
+### 👤 7. User Management & Supabase Auth (`tests/test_users.py`)
+
+| Test ID | Test Name | Description / Boundary Condition | Target Function | Expected Behavior | Implementation Link |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `TC-USR-001` | User Model Creation | Verifies `User` model creation, schema attributes, and DB querying. | `User` Model | User row created & queried | [`test_tc_usr_001_create_user_model`](file:///Users/mathews/Projects/Expensify/tests/test_users.py#L6-L15) |
+| `TC-USR-002` | Dev Header Auth | Verifies `get_current_user` dependency provisions user via `X-User-ID` dev header. | `app.auth.get_current_user()` | Returns provisioned User | [`test_tc_usr_002_auth_dependency_header`](file:///Users/mathews/Projects/Expensify/tests/test_users.py#L17-L22) |
+| `TC-USR-003` | Supabase JWT Auth | Verifies `get_current_user` dependency decodes `Authorization: Bearer <jwt_token>`. | `app.auth.get_current_user()` | Decodes sub & email into User | [`test_tc_usr_003_auth_dependency_jwt`](file:///Users/mathews/Projects/Expensify/tests/test_users.py#L24-L29) |
