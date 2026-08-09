@@ -6,3 +6,6 @@ __pycache__/
 .DS_Store
 .coverage
 .pytest_cache/
+app/static/
+frontend/node_modules/
+frontend/dist/
