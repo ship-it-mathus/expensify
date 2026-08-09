@@ -42,7 +42,9 @@ export class App implements OnInit {
   transferDescription = '';
 
   ngOnInit() {
-    this.api.refreshAll();
+    if (this.auth.isAuthenticated()) {
+      this.api.refreshAll();
+    }
   }
 
   async handleAuthSubmit() {
