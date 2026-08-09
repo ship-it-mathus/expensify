@@ -2,9 +2,10 @@
 
 > A fast, asynchronous, cloud-hosted expense & net worth tracking API built with **FastAPI**, **Supabase (PostgreSQL)**, and **Docker**. Inspired by Paisa's clean workflow.
 
+[![Live Web App](https://img.shields.io/badge/Live_App-Expensify-purple)](https://expensify-api-fj8q.onrender.com/)
 [![Production API](https://img.shields.io/badge/Production_API-Render-brightgreen)](https://expensify-api-fj8q.onrender.com/docs)
 [![Database](https://img.shields.io/badge/Database-Supabase_PostgreSQL-blue)](https://supabase.com)
-[![Tests](https://img.shields.io/badge/Tests-27_Passed_98%25_Cov-success)](TESTCASES.md)
+[![Tests](https://img.shields.io/badge/Tests-32_Passed_99%25_Cov-success)](TESTCASES.md)
 
 ---
 

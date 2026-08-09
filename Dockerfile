@@ -27,7 +27,8 @@ RUN pip install psycopg2-binary
 # Copy backend codebase
 COPY . .
 
-# Copy built Angular static bundle into app/static/
+# Ensure clean app/static and copy freshly built Angular static bundle
+RUN rm -rf ./app/static && mkdir -p ./app/static
 COPY --from=frontend-builder /frontend/dist/expensify-angular/browser ./app/static
 
 EXPOSE 8000

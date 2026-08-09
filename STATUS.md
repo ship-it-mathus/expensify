@@ -8,7 +8,8 @@
 
 ## 🔗 Quick Links
 
-- **Live Production API (Render)**: [https://expensify-api-fj8q.onrender.com/docs](https://expensify-api-fj8q.onrender.com/docs)
+- **Live Web Application (Render)**: [https://expensify-api-fj8q.onrender.com/](https://expensify-api-fj8q.onrender.com/)
+- **Live Production API Docs (Render)**: [https://expensify-api-fj8q.onrender.com/docs](https://expensify-api-fj8q.onrender.com/docs)
 - **GitHub Repository**: [https://github.com/ship-it-mathus/expensify](https://github.com/ship-it-mathus/expensify)
 - **Database**: Supabase PostgreSQL (Managed Cloud DB via Transaction Pooler)
 - **Test Matrix**: [`TESTCASES.md`](file:///Users/mathews/Projects/Expensify/TESTCASES.md) (27 cataloged test cases)
