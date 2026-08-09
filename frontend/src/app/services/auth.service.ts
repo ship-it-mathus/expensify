@@ -6,7 +6,7 @@ export class AuthService {
   private supabaseUrl = 'https://herwthbqakaupwatlxbh.supabase.co';
   private supabaseKey = (typeof window !== 'undefined' && (window as any).__SUPABASE_KEY__)
     ? (window as any).__SUPABASE_KEY__
-    : ['sb_secret_', 'CVnhB5iU99ZJdq57jhFZqg_Wi4dANwG'].join('');
+    : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhlcnd0aGJxYWthdXB3YXRseGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3Nzk2MDksImV4cCI6MjEwMTM1NTYwOX0.U_U6c6MxwumhzZ75vui2rqPoIUNa2-d6vHmK38XS7s8';
   private supabase: SupabaseClient;
 
   // Reactive State Signals
@@ -57,21 +57,6 @@ export class AuthService {
     const { data, error } = await this.supabase.auth.signInWithPassword({
       email,
       password: pass
-    });
-    if (error) {
-      this.authError.set(error.message);
-      throw error;
-    }
-    return data;
-  }
-
-  async signInWithGoogle() {
-    this.authError.set(null);
-    const { data, error } = await this.supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin
-      }
     });
     if (error) {
       this.authError.set(error.message);
