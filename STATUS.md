@@ -1,8 +1,8 @@
 # 📌 Expensify Project Status & Progress Tracker
 
 **Last Updated**: August 10, 2026
-**Current Phase**: Phase 6 Complete (Multi-User Auth, Data Isolation & Production Fixes) 🟢
-**Next Phase**: Phase 7 (Credit cards, richer analytics, PWA polish) 🚀
+**Current Phase**: Phase 8 In Progress (Auth UX, Bug Fixes) 🟡
+**Next Phase**: Phase 8 continued (Recurring Transactions, Budget Limits, PWA) 🚀
 
 ---
 
@@ -121,7 +121,10 @@ git push -u origin feat/your-feature
 
 ---
 
-### ✅ Phase 7: Charts & Analytics Visualisations
+### ✅ Phase 8 In Progress: Auth UX, Bug Fixes
+- [x] **Email Confirmation Flow (PR #26)**: After sign-up, show "Check your inbox" screen with pulsing envelope icon, user's email pill, resend button (with success banner), and back-to-login link. Clicking the Supabase confirmation email link now auto-logs the user into the dashboard via `handleAuthCallback()` (handles both PKCE `?code=` and implicit `#access_token=` formats).
+- [x] **Donut chart blank on load (PR #26)**: `DonutChartComponent` was built at `AfterViewInit` with empty data; Chart.js failed to repaint after `ngOnChanges` pushed real data in. Fixed by detecting empty→has-data transition and destroy+rebuild instead of `update()`.
+- [x] **Auth button guard (PR #26)**: Transaction + Transfer buttons in top app bar leaked through to logged-out users. Wrapped in `@if (auth.isAuthenticated())`.
 - [x] **Chart.js integration**: Installed `chart.js@4.5.1` in Angular frontend.
 - [x] **Bar Chart**: Monthly Income vs Expense vs Net Savings — 3 grouped coloured bars.
 - [x] **Donut Chart**: Category spending breakdown with percentage labels and colour-coded legend.
@@ -132,11 +135,10 @@ git push -u origin feat/your-feature
 
 ---
 
-## 🔮 Upcoming Roadmap (Phase 8 Options)
+## 🔮 Upcoming Roadmap (Phase 8 Continued)
 
 - [ ] **Recurring Transactions**: Auto-log monthly salary/rent entries.
 - [ ] **Budget Limits per Category**: Alert when spending exceeds monthly budget.
 - [ ] **Multi-Month Trend Chart**: Line chart showing income/expense trend over last 6 months.
 - [ ] **PWA Support**: `manifest.json` + service worker for phone home screen install.
-- [ ] **Email Confirmation Flow**: Proper sign-up email verification instead of admin-confirming.
 - [ ] **Password Reset**: Supabase magic link / OTP reset flow in the UI.

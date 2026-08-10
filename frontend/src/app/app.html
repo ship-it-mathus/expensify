@@ -53,79 +53,148 @@
           </div>
         }
 
-        @if (activeTab() === 'overview') {
-          <button class="btn-primary" (click)="setTab('new-transaction')">
-            <span class="material-symbols-outlined" style="font-size: 1.1rem;">add</span>
-            Transaction
-          </button>
-          <button class="btn-secondary" (click)="openModal('transfer')">
-            <span class="material-symbols-outlined" style="font-size: 1.1rem;">swap_horiz</span>
-            Transfer
-          </button>
-        } @else if (activeTab() === 'new-transaction') {
-          @if (editingTxId()) {
-            <button class="btn-secondary" (click)="setTab('history')">
-              <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
-              Back to Transactions
+        @if (auth.isAuthenticated()) {
+          @if (activeTab() === 'overview') {
+            <button class="btn-primary" (click)="setTab('new-transaction')">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem;">add</span>
+              Transaction
             </button>
-          } @else {
-            <button class="btn-secondary" (click)="setTab('overview')">
-              <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
-              Back to Dashboard
+            <button class="btn-secondary" (click)="openModal('transfer')">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem;">swap_horiz</span>
+              Transfer
             </button>
+          } @else if (activeTab() === 'new-transaction') {
+            @if (editingTxId()) {
+              <button class="btn-secondary" (click)="setTab('history')">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+                Back to Transactions
+              </button>
+            } @else {
+              <button class="btn-secondary" (click)="setTab('overview')">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+                Back to Dashboard
+              </button>
+            }
           }
         }
       </div>
+
     </div>
 
     <!-- AUTHENTICATION CHECK -->
     @if (!auth.isAuthenticated()) {
       <div style="min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
-        <div class="base-card" style="max-width: 420px; width: 100%; padding: 32px; background: #1e293b; border-radius: 20px;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--accent-primary);">wallet</span>
-            <h2 style="font-size: 1.5rem; font-weight: 800; margin-top: 8px;">
-              {{ authMode === 'signup' ? 'Create Expensify Account' : 'Welcome to Expensify' }}
-            </h2>
-            <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 4px;">
-              Sign in to track your personal liquid Net Worth
+
+        <!-- ── STATE 1: Awaiting email confirmation ── -->
+        @if (auth.pendingConfirmation()) {
+          <div class="base-card" style="max-width: 440px; width: 100%; padding: 36px 32px; background: #1e293b; border-radius: 20px; text-align: center;">
+
+            <!-- Animated envelope icon -->
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: rgba(99, 102, 241, 0.15); border: 2px solid rgba(99, 102, 241, 0.4); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; animation: pulse-ring 2s infinite;">
+              <span class="material-symbols-outlined" style="font-size: 2rem; color: var(--accent-primary);">mark_email_unread</span>
+            </div>
+
+            <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 8px;">Check your inbox</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; margin-bottom: 6px;">
+              We sent a confirmation link to
             </p>
-          </div>
+            <p style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary); background: rgba(99,102,241,0.1); border-radius: 8px; padding: 6px 14px; display: inline-block; margin-bottom: 20px; word-break: break-all;">
+              {{ auth.pendingEmail() }}
+            </p>
+            <p style="color: var(--text-muted); font-size: 0.84rem; line-height: 1.6; margin-bottom: 24px;">
+              Click the link in that email to confirm your account and you'll be signed in automatically. The link expires in 24 hours.
+            </p>
 
-          @if (auth.authError()) {
-            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--accent-danger); color: var(--accent-danger); padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 16px;">
-              {{ auth.authError() }}
-            </div>
-          }
-
-          <form (submit)="handleAuthSubmit(); $event.preventDefault();" style="display: flex; flex-direction: column; gap: 16px;">
-            <div>
-              <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">Email Address</label>
-              <input type="email" class="form-field" [(ngModel)]="authEmail" name="userEmail" placeholder="yourname@example.com" required>
-            </div>
-
-            <div>
-              <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">Password</label>
-              <input type="password" class="form-field" [(ngModel)]="authPassword" name="userPass" placeholder="••••••••" required>
-            </div>
-
-            <button type="submit" class="btn-primary" style="justify-content: center; width: 100%; padding: 14px;" [disabled]="isAuthSubmitting() || !authEmail || !authPassword">
-              <span class="material-symbols-outlined">login</span>
-              {{ authMode === 'signup' ? 'Create Account' : 'Sign In' }}
-            </button>
-          </form>
-
-          <div style="text-align: center; margin-top: 20px; font-size: 0.88rem; color: var(--text-muted);">
-            @if (authMode === 'login') {
-              Don't have an account? <a (click)="authMode = 'signup'" style="color: var(--accent-primary); font-weight: 700; cursor: pointer;">Sign Up</a>
-            } @else {
-              Already have an account? <a (click)="authMode = 'login'" style="color: var(--accent-primary); font-weight: 700; cursor: pointer;">Sign In</a>
+            <!-- Resend success banner -->
+            @if (auth.resendSuccess()) {
+              <div style="background: rgba(34, 197, 94, 0.15); border: 1px solid var(--accent-success); color: var(--accent-success); padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; justify-content: center;">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">check_circle</span>
+                Confirmation email resent!
+              </div>
             }
-          </div>
 
-        </div>
+            <!-- Auth error banner (e.g. rate limit) -->
+            @if (auth.authError()) {
+              <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--accent-danger); color: var(--accent-danger); padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 16px;">
+                {{ auth.authError() }}
+              </div>
+            }
+
+            <!-- Resend button -->
+            <button
+              id="btn-resend-confirmation"
+              class="btn-primary"
+              style="justify-content: center; width: 100%; padding: 13px; margin-bottom: 14px;"
+              [disabled]="auth.isResending()"
+              (click)="handleResendConfirmation()">
+              <span class="material-symbols-outlined">send</span>
+              {{ auth.isResending() ? 'Sending…' : 'Resend Confirmation Email' }}
+            </button>
+
+            <!-- Back to sign in -->
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              Wrong email? <a id="link-back-to-login" (click)="handleCancelConfirmation()" style="color: var(--accent-primary); font-weight: 700; cursor: pointer;">Go back</a>
+            </div>
+
+          </div>
+        }
+
+        <!-- ── STATE 2: Login / Sign-up form ── -->
+        @else {
+          <div class="base-card" style="max-width: 420px; width: 100%; padding: 32px; background: #1e293b; border-radius: 20px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--accent-primary);">wallet</span>
+              <h2 style="font-size: 1.5rem; font-weight: 800; margin-top: 8px;">
+                {{ authMode === 'signup' ? 'Create Expensify Account' : 'Welcome to Expensify' }}
+              </h2>
+              <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 4px;">
+                {{ authMode === 'signup' ? 'Your personal finance tracker' : 'Sign in to track your liquid Net Worth' }}
+              </p>
+            </div>
+
+            @if (auth.authError()) {
+              <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--accent-danger); color: var(--accent-danger); padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 16px;">
+                {{ auth.authError() }}
+              </div>
+            }
+
+            <form (submit)="handleAuthSubmit(); $event.preventDefault();" style="display: flex; flex-direction: column; gap: 16px;">
+              <div>
+                <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">Email Address</label>
+                <input id="input-auth-email" type="email" class="form-field" [(ngModel)]="authEmail" name="userEmail" placeholder="yourname@example.com" required>
+              </div>
+
+              <div>
+                <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">Password</label>
+                <input id="input-auth-password" type="password" class="form-field" [(ngModel)]="authPassword" name="userPass" placeholder="••••••••" required>
+              </div>
+
+              @if (authMode === 'signup') {
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: -4px 0; line-height: 1.5;">
+                  We'll send a confirmation email. Click the link to activate your account and you'll be signed in automatically.
+                </p>
+              }
+
+              <button id="btn-auth-submit" type="submit" class="btn-primary" style="justify-content: center; width: 100%; padding: 14px;" [disabled]="isAuthSubmitting() || !authEmail || !authPassword">
+                <span class="material-symbols-outlined">{{ authMode === 'signup' ? 'person_add' : 'login' }}</span>
+                {{ isAuthSubmitting() ? 'Please wait…' : (authMode === 'signup' ? 'Create Account' : 'Sign In') }}
+              </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 20px; font-size: 0.88rem; color: var(--text-muted);">
+              @if (authMode === 'login') {
+                Don't have an account? <a id="link-to-signup" (click)="authMode = 'signup'; auth.authError.set(null)" style="color: var(--accent-primary); font-weight: 700; cursor: pointer;">Sign Up</a>
+              } @else {
+                Already have an account? <a id="link-to-login" (click)="authMode = 'login'; auth.authError.set(null)" style="color: var(--accent-primary); font-weight: 700; cursor: pointer;">Sign In</a>
+              }
+            </div>
+
+          </div>
+        }
+
       </div>
     } @else {
+
 
     <!-- 1. OVERVIEW / HOME TAB: Net Worth Summary Card ONLY -->
     @if (activeTab() === 'overview') {

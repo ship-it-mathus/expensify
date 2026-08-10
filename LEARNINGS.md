@@ -163,3 +163,60 @@ if not user:
 ```
 
 This means a user's app data (accounts, transactions) is only accessible after their first authenticated API call, not at the moment of Supabase sign-up.
+
+---
+
+## 13. Chart.js: Empty Initialisation + ngOnChanges Repaint Bug
+
+**The Bug**: `DonutChartComponent` is created at `AfterViewInit` — but Angular signals-based data (analytics) hasn't loaded yet. Chart.js initialises with `data: []`. When the API response arrives and `ngOnChanges` fires, calling `chart.update()` with real data does **not** reliably repaint the chart if it was originally constructed with an empty dataset.
+
+**Why**: Chart.js caches internal layout calculations at construction time. An empty chart has no segments to animate from, so the transition from empty → populated doesn't trigger a visual repaint.
+
+**The Fix**: In `ngOnChanges`, detect the empty → has-data transition and `destroy()` + rebuild the chart from scratch:
+```typescript
+const wasEmpty = (this.chart.data.datasets[0]?.data as number[] ?? []).every(v => !v);
+if (wasEmpty && this.hasData) {
+  this.chart.destroy();
+  this.buildChart(); // clean canvas, correct initialisation
+} else {
+  this.updateChart(); // normal hot-reload for subsequent data changes
+}
+```
+
+**Lesson**: Never assume Chart.js `update()` is equivalent to a fresh `new Chart()`. Always destroy + rebuild when the data goes from truly empty to populated.
+
+---
+
+## 14. Supabase Email Confirmation: Two Token Formats
+
+When a user clicks the confirmation link in their email, Supabase redirects them back to your app with auth tokens in the URL. There are **two formats** depending on your Supabase project's Auth settings:
+
+| Flow | URL Format | How to handle |
+|---|---|---|
+| **PKCE** (default for newer projects) | `?code=abc123` | `supabase.auth.exchangeCodeForSession(code)` |
+| **Implicit** (legacy) | `#access_token=...&refresh_token=...` | `supabase.auth.setSession({ access_token, refresh_token })` |
+
+Always handle both, then clean the URL with `window.history.replaceState({}, title, pathname)` so tokens don't linger in browser history.
+
+**Pattern**:
+```typescript
+private async handleAuthCallback() {
+  const code = new URLSearchParams(window.location.search).get('code');
+  if (code) {
+    await this.supabase.auth.exchangeCodeForSession(code);
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return;
+  }
+  const hash = window.location.hash;
+  if (hash && hash.includes('access_token')) {
+    const params = new URLSearchParams(hash.substring(1));
+    await this.supabase.auth.setSession({
+      access_token: params.get('access_token')!,
+      refresh_token: params.get('refresh_token')!
+    });
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+```
+
+Call this **before** `getSession()` in `initAuth()` so the session is already set when the rest of the app initialises.

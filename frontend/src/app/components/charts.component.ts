@@ -49,8 +49,8 @@ const PALETTE = [
   selector: 'app-donut-chart',
   standalone: true,
   template: `
-    <div style="position: relative; width: 100%; max-width: 320px; margin: 0 auto;">
-      <canvas #canvas></canvas>
+    <div style="position: relative; width: 100%; max-width: 280px; margin: 0 auto; overflow: hidden;">
+      <canvas #canvas style="max-width: 100%;"></canvas>
       @if (!hasData) {
         <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.88rem;">
           No expense data this month
@@ -70,7 +70,19 @@ export class DonutChartComponent implements AfterViewInit, OnChanges, OnDestroy 
   ngAfterViewInit() { this.buildChart(); }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (this.chart) this.updateChart();
+    this.hasData = this.values.some(v => v > 0);
+    if (!this.chart) return;
+
+    // Destroy and rebuild when going from no-data → has-data so Chart.js
+    // renders cleanly instead of staying blank from the empty initialisation.
+    const wasEmpty = (this.chart.data.datasets[0]?.data as number[] ?? []).every(v => !v);
+    if (wasEmpty && this.hasData) {
+      this.chart.destroy();
+      this.chart = null;
+      this.buildChart();
+    } else {
+      this.updateChart();
+    }
   }
 
   ngOnDestroy() { this.chart?.destroy(); }
@@ -93,6 +105,7 @@ export class DonutChartComponent implements AfterViewInit, OnChanges, OnDestroy 
     this.chart.update('active');
   }
 
+
   private getData(): ChartData<'doughnut'> {
     return {
       labels: this.labels,
@@ -109,6 +122,7 @@ export class DonutChartComponent implements AfterViewInit, OnChanges, OnDestroy 
   private getOptions(): ChartOptions<'doughnut'> {
     return {
       responsive: true,
+      maintainAspectRatio: true,
       cutout: '68%',
       plugins: {
         legend: {
@@ -147,7 +161,11 @@ export class DonutChartComponent implements AfterViewInit, OnChanges, OnDestroy 
 @Component({
   selector: 'app-bar-chart',
   standalone: true,
-  template: `<canvas #canvas></canvas>`
+  template: `
+    <div style="position: relative; width: 100%; overflow: hidden;">
+      <canvas #canvas style="max-width: 100%; height: 220px;"></canvas>
+    </div>
+  `
 })
 export class BarChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -195,6 +213,7 @@ export class BarChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   private getOptions(): ChartOptions<'bar'> {
     return {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: {

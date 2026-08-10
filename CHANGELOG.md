@@ -7,7 +7,31 @@ Format: `[PR #] — type: description | Date`
 
 ## [Unreleased]
 
-### feat/charts-and-analytics
+---
+
+## [PR #26] — feat/fix: email confirmation flow, donut chart fix, auth button guard | 2026-08-10
+
+### feat: Email Confirmation Flow
+- `feat` `auth.service.ts`: Added `pendingConfirmation`, `pendingEmail`, `resendSuccess`, `isResending` Angular signals to drive the confirmation screen
+- `feat` `auth.service.ts`: `handleAuthCallback()` runs on every page load — exchanges Supabase PKCE `?code=...` token or applies implicit `#access_token=...` hash so clicking the email link auto-logs the user into the dashboard
+- `feat` `auth.service.ts`: `signUp()` now sets `pendingConfirmation=true` when Supabase returns no session (email unconfirmed)
+- `feat` `auth.service.ts`: `resendConfirmationEmail()` with 4-second auto-clear success state; `cancelConfirmation()` resets all pending state
+- `feat` `app.ts`: `handleAuthSubmit()` skips `refreshAll()` on sign-up when confirmation is pending (no session exists yet)
+- `feat` `app.ts`: `handleResendConfirmation()` and `handleCancelConfirmation()` wrappers
+- `feat` `app.html`: Two-state auth UI — pulsing envelope "Check your inbox" screen (email pill, resend button, back link) and login/signup form with inline hint text
+- `feat` `styles.css`: `pulse-ring` `@keyframes` animation for the confirmation envelope icon
+
+### fix: Donut chart shows "No expense data this month" despite having data
+- `fix` `charts.component.ts`: `DonutChartComponent` was built at `AfterViewInit` with empty data (analytics not loaded yet); `ngOnChanges` pushed data in but Chart.js failed to repaint after empty initialisation
+- `fix` Detect empty→has-data transition in `ngOnChanges` and `destroy()` + rebuild the chart for a clean render instead of calling `update()`
+
+### fix: Transaction + Transfer buttons visible when logged out
+- `fix` `app.html`: Action buttons in top app bar had no auth guard — wrapped in `@if (auth.isAuthenticated())` so they only appear for signed-in users
+
+---
+
+## [PR #25b] — feat: Chart.js analytics tab | 2026-08-10
+
 - `feat` Added Chart.js powered analytics tab with Donut chart (category spending breakdown) and Bar chart (monthly income vs expense vs savings)
 - `feat` New standalone Angular components: `DonutChartComponent`, `BarChartComponent` in `frontend/src/app/components/charts.component.ts`
 - `feat` Savings Rate Hero card redesigned with 3 coloured mini-tiles (Income 🟢 / Expense 🔴 / Saved 🟣)
