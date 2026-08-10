@@ -75,15 +75,31 @@ export class App implements OnInit {
     try {
       if (this.authMode === 'signup') {
         await this.auth.signUp(this.authEmail, this.authPassword);
+        // If email confirmation is required, pendingConfirmation signal is now true.
+        // Do NOT call refreshAll() — there is no session yet.
       } else {
         await this.auth.signIn(this.authEmail, this.authPassword);
+        await this.api.refreshAll();
       }
-      await this.api.refreshAll();
     } catch (err) {
       console.error('Auth error:', err);
     } finally {
       this.isAuthSubmitting.set(false);
     }
+  }
+
+  async handleResendConfirmation() {
+    try {
+      await this.auth.resendConfirmationEmail();
+    } catch (err) {
+      console.error('Resend error:', err);
+    }
+  }
+
+  handleCancelConfirmation() {
+    this.auth.cancelConfirmation();
+    this.authMode = 'login';
+    this.authPassword = '';
   }
 
   async handleSignOut() {
