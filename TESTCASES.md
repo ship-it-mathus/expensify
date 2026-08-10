@@ -6,10 +6,10 @@ This file catalogs every unit and integration test case implemented in the Expen
 
 ## 📊 Test Execution Summary
 
-- **Total Test Cases**: 32
-- **Pass Rate**: 100% (32/32 Passed)
+- **Total Test Cases**: 36
+- **Pass Rate**: 100% (36/36 Passed)
 - **Code Coverage**: 99%
-- **Execution Time**: ~0.42 seconds
+- **Execution Time**: ~0.45 seconds
 
 ---
 
@@ -95,3 +95,14 @@ This file catalogs every unit and integration test case implemented in the Expen
 | `TC-USR-001` | User Model Creation | Verifies `User` model creation, schema attributes, and DB querying. | `User` Model | User row created & queried | [`test_tc_usr_001_create_user_model`](file:///Users/mathews/Projects/Expensify/tests/test_users.py#L6-L15) |
 | `TC-USR-002` | Dev Header Auth | Verifies `get_current_user` dependency provisions user via `X-User-ID` dev header. | `app.auth.get_current_user()` | Returns provisioned User | [`test_tc_usr_002_auth_dependency_header`](file:///Users/mathews/Projects/Expensify/tests/test_users.py#L17-L22) |
 | `TC-USR-003` | Supabase JWT Auth | Verifies `get_current_user` dependency decodes `Authorization: Bearer <jwt_token>`. | `app.auth.get_current_user()` | Decodes sub & email into User | [`test_tc_usr_003_auth_dependency_jwt`](file:///Users/mathews/Projects/Expensify/tests/test_users.py#L24-L29) |
+
+---
+
+### 📈 8. Investment Accounts & Analytics (`tests/test_investment.py`)
+
+| Test ID | Test Name | Description / Boundary Condition | Target Endpoint | Expected Status | Implementation Link |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `TC-INV-001` | Create Investment Account | Verifies creation of investment account with `account_type=investment` and auto-setting `include_in_net_worth=false`. | `POST /api/v1/accounts` | `201 Created` | [`test_tc_inv_001_create_investment_account`](file:///Users/mathews/Projects/Expensify/tests/test_investment.py#L4-L19) |
+| `TC-INV-002` | Net Worth Isolation | Verifies investment account balances are tracked in `total_investment_balance` and excluded from liquid net worth. | `GET /api/v1/summary` | `200 OK` | [`test_tc_inv_002_investment_excluded_from_liquid_summary`](file:///Users/mathews/Projects/Expensify/tests/test_investment.py#L22-L44) |
+| `TC-INV-003` | Investment Analytics % | Calculates `% of monthly income invested` based on transfers into investment accounts. | `GET /api/v1/analytics/investment` | `200 OK` | [`test_tc_inv_003_investment_analytics_endpoint`](file:///Users/mathews/Projects/Expensify/tests/test_investment.py#L47-L81) |
+| `TC-INV-004` | Empty Investment State | Returns 0.0 for total invested and % invested when user has no investment accounts. | `GET /api/v1/analytics/investment` | `200 OK` | [`test_tc_inv_004_investment_analytics_no_investments`](file:///Users/mathews/Projects/Expensify/tests/test_investment.py#L84-L91) |

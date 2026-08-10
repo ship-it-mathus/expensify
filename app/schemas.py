@@ -33,6 +33,7 @@ class AccountResponse(AccountBase):
 class NetWorthSummary(BaseModel):
     total_bank_balance: float = Field(..., description="Sum of active Bank Accounts included in calculation")
     total_credit_card_dues: float = Field(..., description="Sum of active Credit Card Dues included in calculation")
+    total_investment_balance: float = Field(..., description="Sum of all Investment Account balances (informational)")
     actual_liquid_money: float = Field(..., description="Net Money (Bank Balance - Credit Card Dues)")
     included_accounts_count: int = Field(..., description="Number of accounts included in calculation")
     excluded_accounts_count: int = Field(..., description="Number of accounts hidden/excluded from calculation")
@@ -50,6 +51,7 @@ class CategoryCreate(CategoryBase):
 class CategoryResponse(CategoryBase):
     id: str
     is_default: bool
+    parent_id: Optional[str] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -98,6 +100,14 @@ class MonthlyAnalyticsResponse(BaseModel):
     net_savings: float
     savings_rate_percentage: float
     categories: List[CategoryItem]
+
+class InvestmentAnalyticsResponse(BaseModel):
+    year: int
+    month: int
+    total_invested: float = Field(..., description="Total amount transferred into investment accounts this month")
+    total_income: float = Field(..., description="Total income this month (for percentage calculation)")
+    pct_income_invested: float = Field(..., description="Percentage of monthly income invested")
+    total_investment_balance: float = Field(..., description="Total current value across all investment accounts")
 
 # Transfer Schemas
 class TransferCreate(BaseModel):

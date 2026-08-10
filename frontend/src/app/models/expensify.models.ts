@@ -1,6 +1,7 @@
 export enum AccountType {
   BANK = 'bank',
-  CREDIT_CARD = 'credit_card'
+  CREDIT_CARD = 'credit_card',
+  INVESTMENT = 'investment'
 }
 
 export enum TransactionType {
@@ -40,6 +41,7 @@ export interface AccountUpdate {
 export interface NetWorthSummary {
   total_bank_balance: number;
   total_credit_card_dues: number;
+  total_investment_balance: number;
   actual_liquid_money: number;
   included_accounts_count: number;
   excluded_accounts_count: number;
@@ -111,4 +113,24 @@ export interface MonthlyAnalytics {
   net_savings: number;
   savings_rate_percentage: number;
   categories: CategoryItem[];
+}
+
+export interface InvestmentAnalytics {
+  year: number;
+  month: number;
+  total_invested: number;
+  total_income: number;
+  pct_income_invested: number;
+  total_investment_balance: number;
+}
+
+/** A single computed insight card shown in the rotating insights strip. */
+export interface InsightCard {
+  id: string;
+  label: string;
+  sublabel: string;
+  icon: string;
+  color: string;         // CSS color string
+  value: number | null;  // null = no data
+  format: 'currency' | 'percent';
 }

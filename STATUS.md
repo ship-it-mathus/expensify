@@ -1,7 +1,7 @@
 # 📌 Expensify Project Status & Progress Tracker
 
-**Last Updated**: August 10, 2026
-**Current Phase**: Phase 8 In Progress (Auth UX, Bug Fixes) 🟡
+**Last Updated**: August 11, 2026
+**Current Phase**: Phase 8 In Progress (Auth UX, Investments & Insights) 🟡
 **Next Phase**: Phase 8 continued (Recurring Transactions, Budget Limits, PWA) 🚀
 
 ---
@@ -13,7 +13,7 @@
 - **GitHub Repository**: [https://github.com/ship-it-mathus/expensify](https://github.com/ship-it-mathus/expensify)
 - **Database**: Supabase PostgreSQL (Managed Cloud DB via Transaction Pooler port 6543)
 - **Auth Provider**: Supabase Auth (Email/Password; JWT verified on backend)
-- **Test Matrix**: [`TESTCASES.md`](./TESTCASES.md) (32 cataloged test cases, 32/32 passing)
+- **Test Matrix**: [`TESTCASES.md`](./TESTCASES.md) (36 cataloged test cases, 36/36 passing)
 - **Changelog**: [`CHANGELOG.md`](./CHANGELOG.md) (full PR-by-PR history)
 - **Antigravity Quality Config**: [`.antigravity/instructions.md`](./.antigravity/instructions.md)
 
@@ -121,15 +121,10 @@ git push -u origin feat/your-feature
 
 ---
 
-### ✅ Phase 8 In Progress: Auth UX, Bug Fixes
-- [x] **Email Confirmation Flow (PR #26)**: After sign-up, show "Check your inbox" screen with pulsing envelope icon, user's email pill, resend button (with success banner), and back-to-login link. Clicking the Supabase confirmation email link now auto-logs the user into the dashboard via `handleAuthCallback()` (handles both PKCE `?code=` and implicit `#access_token=` formats).
-- [x] **Donut chart blank on load (PR #26)**: `DonutChartComponent` was built at `AfterViewInit` with empty data; Chart.js failed to repaint after `ngOnChanges` pushed real data in. Fixed by detecting empty→has-data transition and destroy+rebuild instead of `update()`.
-- [x] **Auth button guard (PR #26)**: Transaction + Transfer buttons in top app bar leaked through to logged-out users. Wrapped in `@if (auth.isAuthenticated())`.
-- [x] **Chart.js integration**: Installed `chart.js@4.5.1` in Angular frontend.
-- [x] **Bar Chart**: Monthly Income vs Expense vs Net Savings — 3 grouped coloured bars.
-- [x] **Donut Chart**: Category spending breakdown with percentage labels and colour-coded legend.
-- [x] **Savings Rate Hero**: Redesigned hero card with 3 coloured mini-tiles (green Income / red Expense / purple Saved).
-- [x] **Category breakdown list**: Below the donut — each category with ₹ amount and % right-aligned.
+- [x] **Investment Account Type (PR #27)**: Option C architecture — added `AccountType.INVESTMENT`. Investment portfolios are tracked in `total_investment_balance` and automatically excluded from liquid net worth calculations.
+- [x] **% Income Invested Analytic (PR #27)**: `GET /api/v1/analytics/investment` endpoint calculates monthly investment inflows (SIPs/transfers into investment accounts) as a percentage of total income.
+- [x] **Rotating Insights Strip (PR #27)**: Built `InsightsCarouselComponent` in Angular that auto-cycles through fun/quick stats (Food today, Food this month, Fuel, Rent, Shopping, % income invested) every 10 seconds with a visual progress bar and smooth opacity fade.
+- [x] **Add Account Modal (PR #27)**: Added "Add Account" button & modal in Settings tab supporting Bank Account, Credit Card, and Investment Portfolio creation.
 - [x] **CHANGELOG.md**: Full PR-by-PR code changelog created.
 - [x] **Rule enforced**: Docs (STATUS, README, LEARNINGS, CHANGELOG) updated with every PR going forward.
 

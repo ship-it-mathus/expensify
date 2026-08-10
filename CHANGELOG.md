@@ -9,6 +9,23 @@ Format: `[PR #] — type: description | Date`
 
 ---
 
+## [PR #27] — feat: Investment accounts, % income invested analytics & rotating insights strip | 2026-08-11
+
+### feat: Investment Account Type (Option C Architecture)
+- `feat` `models.py`: Added `AccountType.INVESTMENT` enum value. Added `parent_id` foreign key on `categories` table for parent/super-category hierarchy.
+- `feat` `schemas.py`: Added `total_investment_balance` to `NetWorthSummary` and `parent_id` to `CategoryResponse`. Added `InvestmentAnalyticsResponse`.
+- `feat` `accounts.py`: Updated `GET /api/v1/summary` to isolate investment balances in `total_investment_balance` and exclude investment accounts from liquid net worth. `POST /api/v1/accounts` automatically sets `include_in_net_worth = False` for investment type.
+- `feat` `transactions.py`: Updated `adjust_account_balance` and transfer balance calculations so transfers from Bank → Investment increase investment portfolio value and decrease bank balance. Added transfer tags `Investment (SIP / Purchase)` and `Investment Redemption`.
+- `feat` `test_investment.py`: Added 4 automated unit tests (`TC-INV-001` to `TC-INV-004`) — 36/36 tests passing.
+
+### feat: Investment Analytics & Rotating Insights Carousel
+- `feat` `analytics.py`: Added `GET /api/v1/analytics/investment` returning `total_invested`, `total_income`, `pct_income_invested`, and `total_investment_balance`.
+- `feat` `charts.component.ts`: Built `InsightsCarouselComponent` — a standalone Angular component that auto-cycles through stat cards with a 10s progress bar and smooth opacity fade transition.
+- `feat` `app.ts`: Added `insightCards` getter computing real-time stats (Food today, Food this month, Fuel this month, Rent, Shopping, Entertainment, Health, Transport, and % income invested). Added account creation form models and handlers.
+- `feat` `app.html`: Integrated `InsightsCarouselComponent` strip in Analytics tab, purple investment account badges & chips, Investment Portfolio card in Overview summary, and "Add Account" modal in Settings.
+
+---
+
 ## [PR #26] — feat/fix: email confirmation flow, donut chart fix, auth button guard | 2026-08-10
 
 ### feat: Email Confirmation Flow
