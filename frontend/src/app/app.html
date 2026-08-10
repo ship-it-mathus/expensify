@@ -53,29 +53,32 @@
           </div>
         }
 
-        @if (activeTab() === 'overview') {
-          <button class="btn-primary" (click)="setTab('new-transaction')">
-            <span class="material-symbols-outlined" style="font-size: 1.1rem;">add</span>
-            Transaction
-          </button>
-          <button class="btn-secondary" (click)="openModal('transfer')">
-            <span class="material-symbols-outlined" style="font-size: 1.1rem;">swap_horiz</span>
-            Transfer
-          </button>
-        } @else if (activeTab() === 'new-transaction') {
-          @if (editingTxId()) {
-            <button class="btn-secondary" (click)="setTab('history')">
-              <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
-              Back to Transactions
+        @if (auth.isAuthenticated()) {
+          @if (activeTab() === 'overview') {
+            <button class="btn-primary" (click)="setTab('new-transaction')">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem;">add</span>
+              Transaction
             </button>
-          } @else {
-            <button class="btn-secondary" (click)="setTab('overview')">
-              <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
-              Back to Dashboard
+            <button class="btn-secondary" (click)="openModal('transfer')">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem;">swap_horiz</span>
+              Transfer
             </button>
+          } @else if (activeTab() === 'new-transaction') {
+            @if (editingTxId()) {
+              <button class="btn-secondary" (click)="setTab('history')">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+                Back to Transactions
+              </button>
+            } @else {
+              <button class="btn-secondary" (click)="setTab('overview')">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+                Back to Dashboard
+              </button>
+            }
           }
         }
       </div>
+
     </div>
 
     <!-- AUTHENTICATION CHECK -->
