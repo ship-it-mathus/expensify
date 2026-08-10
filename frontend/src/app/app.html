@@ -222,6 +222,12 @@
               <div style="font-size: 0.78rem; color: var(--text-muted);">Total Credit Card Dues</div>
               <div style="font-size: 1.35rem; font-weight: 800; color: var(--accent-danger); margin-top: 4px;">{{ (api.summary()?.total_credit_card_dues || 0) | currency:'INR':'symbol':'1.2-2' }}</div>
             </div>
+            @if ((api.summary()?.total_investment_balance || 0) > 0) {
+              <div style="background: rgba(99,102,241,0.06); padding: 16px; border-radius: 12px; border: 1px solid rgba(99,102,241,0.3);">
+                <div style="font-size: 0.78rem; color: #818cf8;">Investment Portfolio</div>
+                <div style="font-size: 1.35rem; font-weight: 800; color: #818cf8; margin-top: 4px;">{{ (api.summary()?.total_investment_balance || 0) | currency:'INR':'symbol':'1.2-2' }}</div>
+              </div>
+            }
           </div>
         </div>
       </div>
@@ -261,10 +267,10 @@
               @for (acc of api.accounts(); track acc.id) {
                 <button type="button" class="category-chip" [class.selected]="newTxAccountId === acc.id" (click)="selectAccount(acc.id)">
                   <span class="material-symbols-outlined" style="font-size: 1.1rem;">
-                    {{ acc.account_type === 'bank' ? 'account_balance' : 'credit_card' }}
+                    {{ acc.account_type === 'bank' ? 'account_balance' : acc.account_type === 'investment' ? 'trending_up' : 'credit_card' }}
                   </span>
                   {{ acc.name }}
-                  <span [style.color]="acc.account_type === 'bank' ? 'var(--accent-success)' : 'var(--accent-danger)'" style="font-size: 0.75rem; margin-left: 4px; font-weight: 700;">
+                  <span [style.color]="acc.account_type === 'bank' ? 'var(--accent-success)' : acc.account_type === 'investment' ? '#6366f1' : 'var(--accent-danger)'" style="font-size: 0.75rem; margin-left: 4px; font-weight: 700;">
                     ({{ acc.balance | currency:acc.currency:'symbol':'1.0-0' }})
                   </span>
                 </button>
@@ -321,10 +327,18 @@
     <!-- 3. SETTINGS TAB: Account Configuration & Net Worth Visibility Toggles -->
     @if (activeTab() === 'settings') {
       <div class="base-card">
-        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 4px;">Account Settings</h2>
-        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 16px;">
-          Manage accounts and toggle which accounts contribute to your liquid Net Worth calculation.
-        </p>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 4px;">Account Settings</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+              Manage accounts and toggle which accounts contribute to your liquid Net Worth calculation.
+            </p>
+          </div>
+          <button class="btn-primary" (click)="openModal('account')" style="flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">add</span>
+            Add Account
+          </button>
+        </div>
 
         <div class="base-grid">
           @for (acc of api.accounts(); track acc.id) {
@@ -332,14 +346,14 @@
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 12px;">
                   <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #1e293b; border: var(--border-subtle);">
-                    <span class="material-symbols-outlined" style="color: var(--accent-primary);">
-                      {{ acc.account_type === 'bank' ? 'account_balance' : 'credit_card' }}
+                    <span class="material-symbols-outlined" [style.color]="acc.account_type === 'bank' ? 'var(--accent-success)' : acc.account_type === 'investment' ? '#6366f1' : 'var(--accent-danger)'">
+                      {{ acc.account_type === 'bank' ? 'account_balance' : acc.account_type === 'investment' ? 'trending_up' : 'credit_card' }}
                     </span>
                   </div>
                   <div>
                     <h3 style="font-size: 1rem; font-weight: 700;">{{ acc.name }}</h3>
                     <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">
-                      {{ acc.account_type === 'bank' ? 'Bank Account' : 'Credit Card' }}
+                      {{ acc.account_type === 'bank' ? 'Bank Account' : acc.account_type === 'investment' ? 'Investment Portfolio' : 'Credit Card' }}
                     </span>
                   </div>
                 </div>
@@ -349,12 +363,17 @@
                 </button>
               </div>
 
-              <div style="font-size: 1.5rem; font-weight: 800;" [style.color]="acc.account_type === 'bank' ? 'var(--accent-success)' : 'var(--accent-danger)'">
+              <div style="font-size: 1.5rem; font-weight: 800;"
+                   [style.color]="acc.account_type === 'bank' ? 'var(--accent-success)' : acc.account_type === 'investment' ? '#6366f1' : 'var(--accent-danger)'">
                 {{ acc.balance | currency:acc.currency:'symbol':'1.2-2' }}
               </div>
 
               <div style="font-size: 0.78rem; color: var(--text-muted);">
-                Status: {{ acc.include_in_net_worth ? 'Included in Net Worth' : 'Excluded from Net Worth' }}
+                @if (acc.account_type === 'investment') {
+                  <span style="color: #6366f1; font-weight: 600;">📈 Investment Portfolio — always tracked separately</span>
+                } @else {
+                  Status: {{ acc.include_in_net_worth ? 'Included in Net Worth' : 'Excluded from Net Worth' }}
+                }
               </div>
             </div>
           } @empty {
@@ -423,6 +442,12 @@
     <!-- 5. ANALYTICS TAB -->
     @if (activeTab() === 'analytics') {
       <div class="base-grid">
+
+        <!-- ── Rotating Insights Strip ── -->
+        <div style="grid-column: 1 / -1;">
+          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: block; margin-bottom: 10px;">Quick Insights & Fun Stats (10s Cycle)</span>
+          <app-insights-carousel [cards]="insightCards"></app-insights-carousel>
+        </div>
 
         <!-- ── Savings Rate Hero ── -->
         <div class="base-card" style="grid-column: 1 / -1; text-align: center;">
@@ -531,6 +556,32 @@
           <div style="display: flex; justify-content: flex-end; gap: 10px;">
             <button type="button" (click)="closeModals()" style="background: none; border: none; cursor: pointer; font-weight: 600; padding: 10px 14px; color: var(--text-muted);">Cancel</button>
             <button type="submit" class="btn-primary" [disabled]="!transferFromId || !transferToId || !transferAmount || transferAmount <= 0 || transferFromId === transferToId">Execute Transfer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Add Account Modal -->
+  @if (isAddAccountModalOpen()) {
+    <div class="modal-overlay">
+      <div class="modal-card">
+        <h3 style="font-size: 1.2rem; font-weight: 700;">Add New Account</h3>
+        <form (submit)="handleCreateAccount(); $event.preventDefault();" style="display: flex; flex-direction: column; gap: 14px;">
+          <input type="text" class="form-field" [(ngModel)]="newAccName" name="accName" placeholder="Account Name (e.g. Zerodha Portfolio, HDFC Bank)" required>
+
+          <select class="form-field" [(ngModel)]="newAccType" name="accType" required>
+            <option value="bank">Bank Account</option>
+            <option value="credit_card">Credit Card</option>
+            <option value="investment">Investment Portfolio (SIP / Stocks / MF)</option>
+          </select>
+
+          <input type="number" step="0.01" class="form-field" [(ngModel)]="newAccBalance" name="accBalance" placeholder="Initial Balance (₹)" required>
+          <input type="text" class="form-field" [(ngModel)]="newAccNotes" name="accNotes" placeholder="Notes (Optional)">
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" (click)="closeModals()" style="background: none; border: none; cursor: pointer; font-weight: 600; padding: 10px 14px; color: var(--text-muted);">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="!newAccName || newAccBalance === null">Create Account</button>
           </div>
         </form>
       </div>

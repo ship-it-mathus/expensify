@@ -6,6 +6,7 @@ import {
   AccountCreate,
   AccountUpdate,
   Category,
+  InvestmentAnalytics,
   MonthlyAnalytics,
   NetWorthSummary,
   Transaction,
@@ -27,6 +28,7 @@ export class ExpensifyApiService {
   transactions = signal<Transaction[]>([]);
   categories = signal<Category[]>([]);
   analytics = signal<MonthlyAnalytics | null>(null);
+  investmentAnalytics = signal<InvestmentAnalytics | null>(null);
 
   isLoading = signal<boolean>(false);
 
@@ -36,12 +38,13 @@ export class ExpensifyApiService {
   async refreshAll() {
     this.isLoading.set(true);
     try {
-      const [sum, accs, txs, cats, ana] = await Promise.all([
+      const [sum, accs, txs, cats, ana, inv] = await Promise.all([
         firstValueFrom(this.http.get<NetWorthSummary>(`${this.baseUrl}/summary`)),
         firstValueFrom(this.http.get<Account[]>(`${this.baseUrl}/accounts`)),
         firstValueFrom(this.http.get<Transaction[]>(`${this.baseUrl}/transactions`)),
         firstValueFrom(this.http.get<Category[]>(`${this.baseUrl}/categories`)),
-        firstValueFrom(this.http.get<MonthlyAnalytics>(`${this.baseUrl}/analytics/monthly`))
+        firstValueFrom(this.http.get<MonthlyAnalytics>(`${this.baseUrl}/analytics/monthly`)),
+        firstValueFrom(this.http.get<InvestmentAnalytics>(`${this.baseUrl}/analytics/investment`))
       ]);
 
       this.summary.set(sum);
@@ -49,6 +52,7 @@ export class ExpensifyApiService {
       this.transactions.set(txs);
       this.categories.set(cats);
       this.analytics.set(ana);
+      this.investmentAnalytics.set(inv);
     } catch (err) {
       console.error('Failed to sync Expensify API data:', err);
     } finally {

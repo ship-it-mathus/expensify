@@ -29,10 +29,16 @@ def get_net_worth_summary(
 
     total_bank = 0.0
     total_credit_card = 0.0
+    total_investment = 0.0
     included_count = 0
     excluded_count = 0
 
     for acc in accounts:
+        # Investment accounts always contribute to investment total, never to liquid
+        if acc.account_type == AccountType.INVESTMENT:
+            total_investment += acc.balance
+            excluded_count += 1
+            continue
         if acc.include_in_net_worth:
             included_count += 1
             if acc.account_type == AccountType.BANK:
@@ -47,6 +53,7 @@ def get_net_worth_summary(
     return NetWorthSummary(
         total_bank_balance=round(total_bank, 2),
         total_credit_card_dues=round(total_credit_card, 2),
+        total_investment_balance=round(total_investment, 2),
         actual_liquid_money=round(actual_liquid, 2),
         included_accounts_count=included_count,
         excluded_accounts_count=excluded_count,
@@ -60,7 +67,11 @@ def create_account(
     current_user: Optional[User] = Depends(get_current_user)
 ):
     user = _require_user(current_user)
-    db_account = Account(**account_in.model_dump(), user_id=user.id)
+    account_data = account_in.model_dump()
+    # Investment accounts are always excluded from liquid net worth by default
+    if account_data.get("account_type") == AccountType.INVESTMENT:
+        account_data["include_in_net_worth"] = False
+    db_account = Account(**account_data, user_id=user.id)
     db.add(db_account)
     db.commit()
     db.refresh(db_account)

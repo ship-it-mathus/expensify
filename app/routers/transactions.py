@@ -26,14 +26,16 @@ def _require_user(current_user: Optional[User]) -> User:
 
 def adjust_account_balance(account: Account, amount: float, tx_type: TransactionType, is_reversal: bool = False):
     """
-    Adjusts account balance based on AccountType (Bank vs Credit Card) and TransactionType (Income vs Expense).
+    Adjusts account balance based on AccountType and TransactionType.
+    - Bank / Investment: Income increases (+), Expense decreases (-)
+    - Credit Card:       Expense increases dues (+), Income/payment decreases dues (-)
     If is_reversal=True, reverses the operation (used when deleting a transaction).
     """
     is_expense = (tx_type == TransactionType.EXPENSE)
     if is_reversal:
         is_expense = not is_expense
 
-    if account.account_type == AccountType.BANK:
+    if account.account_type in (AccountType.BANK, AccountType.INVESTMENT):
         account.balance += (-amount if is_expense else amount)
     elif account.account_type == AccountType.CREDIT_CARD:
         account.balance += (amount if is_expense else -amount)
@@ -104,6 +106,10 @@ def create_transfer(
 
     if from_acc.account_type == AccountType.BANK and to_acc.account_type == AccountType.CREDIT_CARD:
         transfer_tag = "Credit Card Bill Payment"
+    elif from_acc.account_type == AccountType.BANK and to_acc.account_type == AccountType.INVESTMENT:
+        transfer_tag = "Investment (SIP / Purchase)"
+    elif from_acc.account_type == AccountType.INVESTMENT and to_acc.account_type == AccountType.BANK:
+        transfer_tag = "Investment Redemption"
     elif from_acc.account_type == AccountType.BANK and to_acc.account_type == AccountType.BANK:
         transfer_tag = "Self Fund Transfer"
     elif from_acc.account_type == AccountType.CREDIT_CARD and to_acc.account_type == AccountType.BANK:
@@ -111,12 +117,12 @@ def create_transfer(
     else:
         transfer_tag = "Account Transfer"
 
-    if from_acc.account_type == AccountType.BANK:
+    if from_acc.account_type in (AccountType.BANK, AccountType.INVESTMENT):
         from_acc.balance -= amount
     elif from_acc.account_type == AccountType.CREDIT_CARD:
         from_acc.balance += amount
 
-    if to_acc.account_type == AccountType.BANK:
+    if to_acc.account_type in (AccountType.BANK, AccountType.INVESTMENT):
         to_acc.balance += amount
     elif to_acc.account_type == AccountType.CREDIT_CARD:
         to_acc.balance -= amount

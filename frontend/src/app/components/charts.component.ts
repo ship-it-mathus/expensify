@@ -244,3 +244,121 @@ export class BarChartComponent implements AfterViewInit, OnChanges, OnDestroy {
     };
   }
 }
+
+// ─────────────────────────────────────────────
+// Insights Carousel — Rotating Stat Cards
+// ─────────────────────────────────────────────
+import { CommonModule, CurrencyPipe } from '@angular/common';
+import { InsightCard } from '../models/expensify.models';
+
+@Component({
+  selector: 'app-insights-carousel',
+  standalone: true,
+  imports: [CommonModule, CurrencyPipe],
+  template: `
+    <div style="position: relative; overflow: hidden;">
+      @if (cards.length > 0) {
+        <!-- Current card -->
+        <div
+          [style.opacity]="visible ? '1' : '0'"
+          style="transition: opacity 0.5s ease; display: flex; align-items: center; gap: 16px; background: #0f172a; border-radius: 16px; padding: 20px 24px; border: 1px solid #1e293b; cursor: pointer; min-height: 88px;"
+          (click)="advance()">
+
+          <!-- Icon bubble -->
+          <div [style.background]="card.color + '1a'" [style.border]="'1.5px solid ' + card.color + '55'"
+               style="width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" [style.color]="card.color" style="font-size: 1.5rem;">{{ card.icon }}</span>
+          </div>
+
+          <!-- Text -->
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px;">{{ card.label }}</div>
+            <div style="font-size: 1.6rem; font-weight: 800; line-height: 1;" [style.color]="card.color">
+              @if (card.value === null || card.value === undefined) {
+                <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">No data yet</span>
+              } @else if (card.format === 'currency') {
+                {{ card.value | currency:'INR':'symbol':'1.0-0' }}
+              } @else {
+                {{ card.value.toFixed(1) }}%
+              }
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">{{ card.sublabel }}</div>
+          </div>
+
+          <!-- Progress dots -->
+          <div style="display: flex; flex-direction: column; gap: 5px; align-items: center; flex-shrink: 0;">
+            @for (c of cards; track c.id; let i = $index) {
+              <div [style.background]="i === currentIndex ? card.color : '#334155'"
+                   [style.height]="i === currentIndex ? '20px' : '6px'"
+                   style="width: 4px; border-radius: 4px; transition: all 0.3s ease;"></div>
+            }
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div style="height: 2px; background: #1e293b; border-radius: 1px; margin-top: 8px; overflow: hidden;">
+          <div [style.width]="progressPct + '%'" [style.background]="card.color"
+               style="height: 100%; border-radius: 1px; transition: width 0.1s linear;"></div>
+        </div>
+      } @else {
+        <div style="color: var(--text-muted); font-size: 0.88rem; text-align: center; padding: 24px;">
+          No insight data yet — add some transactions!
+        </div>
+      }
+    </div>
+  `
+})
+export class InsightsCarouselComponent implements OnChanges, OnDestroy {
+  @Input() cards: InsightCard[] = [];
+
+  currentIndex = 0;
+  visible = true;
+  progressPct = 0;
+
+  private cycleTimer: ReturnType<typeof setInterval> | null = null;
+  private progressTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly CYCLE_MS = 10000;
+  private readonly PROGRESS_TICK_MS = 100;
+
+  get card(): InsightCard {
+    return this.cards[this.currentIndex] ?? this.cards[0];
+  }
+
+  ngOnChanges() {
+    if (this.cards.length > 0) this.startCycle();
+  }
+
+  ngOnDestroy() { this.clearTimers(); }
+
+  advance() {
+    this.clearTimers();
+    this.fadeToNext();
+    this.startCycle();
+  }
+
+  private startCycle() {
+    this.clearTimers();
+    this.progressPct = 0;
+
+    this.progressTimer = setInterval(() => {
+      this.progressPct = Math.min(100, this.progressPct + (100 / (this.CYCLE_MS / this.PROGRESS_TICK_MS)));
+    }, this.PROGRESS_TICK_MS);
+
+    this.cycleTimer = setInterval(() => this.fadeToNext(), this.CYCLE_MS);
+  }
+
+  private fadeToNext() {
+    this.visible = false;
+    setTimeout(() => {
+      this.currentIndex = (this.currentIndex + 1) % this.cards.length;
+      this.progressPct = 0;
+      this.visible = true;
+    }, 520);
+  }
+
+  private clearTimers() {
+    if (this.cycleTimer) { clearInterval(this.cycleTimer); this.cycleTimer = null; }
+    if (this.progressTimer) { clearInterval(this.progressTimer); this.progressTimer = null; }
+  }
+}
+

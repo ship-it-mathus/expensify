@@ -1,15 +1,15 @@
 import { Component, OnInit, inject, signal, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpensifyApiService } from './services/api.service';
-import { AccountType, Transaction, TransactionType } from './models/expensify.models';
+import { AccountType, InsightCard, Transaction, TransactionType } from './models/expensify.models';
 import { AuthService } from './services/auth.service';
-import { DonutChartComponent, BarChartComponent } from './components/charts.component';
+import { DonutChartComponent, BarChartComponent, InsightsCarouselComponent } from './components/charts.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, DonutChartComponent, BarChartComponent],
+  imports: [CommonModule, FormsModule, DonutChartComponent, BarChartComponent, InsightsCarouselComponent, CurrencyPipe],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -38,6 +38,7 @@ export class App implements OnInit {
 
   // Modal Signals
   isTransferModalOpen = signal<boolean>(false);
+  isAddAccountModalOpen = signal<boolean>(false);
 
   // Form Models
   newTxAccountId = '';
@@ -45,6 +46,11 @@ export class App implements OnInit {
   newTxAmount: number | null = null;
   newTxCategory = '';
   newTxDescription = '';
+
+  newAccName = '';
+  newAccType: AccountType = AccountType.BANK;
+  newAccBalance: number | null = null;
+  newAccNotes = '';
 
   transferFromId = '';
   transferToId = '';
@@ -65,6 +71,57 @@ export class App implements OnInit {
   get currentMonthLabel(): string {
     const now = new Date();
     return now.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+
+  /**
+   * Computes all rotating insight cards from in-memory transactions.
+   * Most insights are computed client-side to avoid extra API calls.
+   * % invested comes from the investment analytics signal.
+   */
+  get insightCards(): InsightCard[] {
+    const txs = this.api.transactions();
+    const inv = this.api.investmentAnalytics();
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const thisYear = now.getFullYear();
+    const thisMonth = now.getMonth() + 1;
+
+    const sumExpense = (category: string, dateFilter: 'today' | 'month') => {
+      return txs
+        .filter(tx => {
+          if (tx.transaction_type !== TransactionType.EXPENSE) return false;
+          if (tx.category.toLowerCase() !== category.toLowerCase()) return false;
+          const txDate = new Date(tx.date);
+          if (dateFilter === 'today') return tx.date.slice(0, 10) === todayStr;
+          return txDate.getFullYear() === thisYear && txDate.getMonth() + 1 === thisMonth;
+        })
+        .reduce((sum, tx) => sum + tx.amount, 0);
+    };
+
+    const card = (id: string, label: string, sublabel: string, icon: string, color: string, value: number, format: 'currency' | 'percent' = 'currency'): InsightCard =>
+      ({ id, label, sublabel, icon, color, value: value > 0 ? value : null, format });
+
+    const monthLabel = `in ${this.currentMonthLabel}`;
+
+    return [
+      card('food-today',    'Food today',          'Restaurants, groceries, etc.',    'restaurant',        '#f59e0b', sumExpense('food',          'today')),
+      card('food-month',    'Food this month',     monthLabel,                         'restaurant',        '#f59e0b', sumExpense('food',          'month')),
+      card('fuel-month',    'Fuel this month',     monthLabel,                         'local_gas_station', '#ef4444', sumExpense('fuel',          'month')),
+      card('rent-month',    'Rent this month',     monthLabel,                         'home',              '#8b5cf6', sumExpense('rent',          'month')),
+      card('shopping-month','Shopping this month', monthLabel,                         'shopping_bag',      '#ec4899', sumExpense('shopping',      'month')),
+      card('entertain-month','Entertainment',      monthLabel,                         'movie',             '#06b6d4', sumExpense('entertainment', 'month')),
+      card('health-month',  'Health this month',   monthLabel,                         'medical_services',  '#10b981', sumExpense('health',        'month')),
+      card('transport-month','Transport this month',monthLabel,                        'directions_bus',    '#3b82f6', sumExpense('transport',     'month')),
+      {
+        id: 'pct-invested',
+        label: '% income invested',
+        sublabel: inv ? `₹${inv.total_invested.toLocaleString('en-IN')} of ₹${inv.total_income.toLocaleString('en-IN')} · ${monthLabel}` : monthLabel,
+        icon: 'trending_up',
+        color: '#6366f1',
+        value: inv?.pct_income_invested ?? null,
+        format: 'percent'
+      }
+    ].filter(c => c.value !== null) as InsightCard[];
   }
 
   ngOnInit() {}
@@ -187,12 +244,33 @@ export class App implements OnInit {
     }
   }
 
-  openModal(modal: 'transfer') {
+  openModal(modal: 'transfer' | 'account') {
     if (modal === 'transfer') this.isTransferModalOpen.set(true);
+    if (modal === 'account') this.isAddAccountModalOpen.set(true);
   }
 
   closeModals() {
     this.isTransferModalOpen.set(false);
+    this.isAddAccountModalOpen.set(false);
+  }
+
+  async handleCreateAccount() {
+    if (!this.newAccName || this.newAccBalance === null) return;
+    try {
+      await this.api.createAccount({
+        name: this.newAccName,
+        account_type: this.newAccType,
+        balance: Number(this.newAccBalance),
+        notes: this.newAccNotes || undefined
+      });
+      this.newAccName = '';
+      this.newAccType = AccountType.BANK;
+      this.newAccBalance = null;
+      this.newAccNotes = '';
+      this.closeModals();
+    } catch (err) {
+      console.error('Error creating account:', err);
+    }
   }
 
   async handleCreateTransfer() {

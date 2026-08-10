@@ -11,6 +11,7 @@ def generate_ulid() -> str:
 class AccountType(str, enum.Enum):
     BANK = "bank"
     CREDIT_CARD = "credit_card"
+    INVESTMENT = "investment"
 
 class TransactionType(str, enum.Enum):
     INCOME = "income"
@@ -58,6 +59,9 @@ class Category(Base):
     category_type = Column(Enum(TransactionType), nullable=False, index=True)
     icon = Column(String(50), nullable=True)
     is_default = Column(Boolean, nullable=False, default=False)
+    # parent_id enables super-category hierarchy (e.g. Shopping → Clothing, Beauty).
+    # NULL means this is a top-level or standalone category.
+    parent_id = Column(String(26), ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Transaction(Base):
