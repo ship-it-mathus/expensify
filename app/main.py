@@ -7,9 +7,41 @@ import os
 from app.config import settings
 from app.database import engine, Base
 from app.routers import accounts, transactions, categories, analytics
+from sqlalchemy import text
 
 # Create database tables automatically if they don't exist yet
 Base.metadata.create_all(bind=engine)
+
+def run_startup_migrations():
+    """Auto-applies schema updates to production PostgreSQL (Supabase)."""
+    if settings.DATABASE_URL.startswith("sqlite"):
+        return
+    with engine.connect() as conn:
+        # Add parent_id column to categories table if missing
+        try:
+            conn.execute(text("ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_id VARCHAR(26) REFERENCES categories(id) ON DELETE SET NULL;"))
+            conn.commit()
+        except Exception as e:
+            print(f"[Migration] categories.parent_id notice: {e}")
+
+        # Add user_id to tables if missing
+        for table in ["accounts", "transactions", "categories"]:
+            try:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS user_id VARCHAR(36) REFERENCES users(id) ON DELETE CASCADE;"))
+                conn.commit()
+            except Exception as e:
+                print(f"[Migration] {table}.user_id notice: {e}")
+
+        # Add 'investment' enum value to PostgreSQL accounttype enum
+        try:
+            conn.execution_options(isolation_level="AUTOCOMMIT").execute(text("ALTER TYPE accounttype ADD VALUE IF NOT EXISTS 'investment';"))
+        except Exception as e:
+            print(f"[Migration] accounttype enum notice: {e}")
+
+try:
+    run_startup_migrations()
+except Exception as e:
+    print(f"[Migration Error] Startup migration notice: {e}")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
