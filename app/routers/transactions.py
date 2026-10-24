@@ -134,6 +134,8 @@ def create_transfer(
         amount=amount,
         category="transfer",
         description=f"[{transfer_tag}] Transfer to {to_acc.name} ({desc_note})",
+        is_transfer=True,
+        transfer_destination_account_id=to_acc.id,
         date=tx_date
     )
 
@@ -144,6 +146,8 @@ def create_transfer(
         amount=amount,
         category="transfer",
         description=f"[{transfer_tag}] Transfer from {from_acc.name} ({desc_note})",
+        is_transfer=True,
+        transfer_destination_account_id=from_acc.id,
         date=tx_date
     )
 

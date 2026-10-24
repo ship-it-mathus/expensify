@@ -49,12 +49,14 @@ def get_net_worth_summary(
             excluded_count += 1
 
     actual_liquid = total_bank - total_credit_card
+    total_wealth = actual_liquid + total_investment
 
     return NetWorthSummary(
         total_bank_balance=round(total_bank, 2),
         total_credit_card_dues=round(total_credit_card, 2),
         total_investment_balance=round(total_investment, 2),
         actual_liquid_money=round(actual_liquid, 2),
+        total_portfolio_wealth=round(total_wealth, 2),
         included_accounts_count=included_count,
         excluded_accounts_count=excluded_count,
         currency="INR"

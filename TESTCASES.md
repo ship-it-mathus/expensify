@@ -6,10 +6,10 @@ This file catalogs every unit and integration test case implemented in the Expen
 
 ## 📊 Test Execution Summary
 
-- **Total Test Cases**: 36
-- **Pass Rate**: 100% (36/36 Passed)
+- **Total Test Cases**: 37
+- **Pass Rate**: 100% (37/37 Passed)
 - **Code Coverage**: 99%
-- **Execution Time**: ~0.45 seconds
+- **Execution Time**: ~0.42 seconds
 
 ---
 
@@ -106,3 +106,4 @@ This file catalogs every unit and integration test case implemented in the Expen
 | `TC-INV-002` | Net Worth Isolation | Verifies investment account balances are tracked in `total_investment_balance` and excluded from liquid net worth. | `GET /api/v1/summary` | `200 OK` | [`test_tc_inv_002_investment_excluded_from_liquid_summary`](file:///Users/mathews/Projects/Expensify/tests/test_investment.py#L22-L44) |
 | `TC-INV-003` | Investment Analytics % | Calculates `% of monthly income invested` based on transfers into investment accounts. | `GET /api/v1/analytics/investment` | `200 OK` | [`test_tc_inv_003_investment_analytics_endpoint`](file:///Users/mathews/Projects/Expensify/tests/test_investment.py#L47-L81) |
 | `TC-INV-004` | Empty Investment State | Returns 0.0 for total invested and % invested when user has no investment accounts. | `GET /api/v1/analytics/investment` | `200 OK` | [`test_tc_inv_004_investment_analytics_no_investments`](file:///Users/mathews/Projects/Expensify/tests/test_investment.py#L84-L91) |
+| `TC-INV-005` | Investment Asset Class & Allocation | Verifies accounts with asset_class generate sorted pie chart allocation slices with percentages. | `GET /api/v1/analytics/investment` | `200 OK` | [`test_tc_inv_005_investment_asset_class_and_allocation`](file:///Users/mathews/Projects/Expensify/tests/test_investment.py#L93-L115) |

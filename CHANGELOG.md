@@ -9,6 +9,27 @@ Format: `[PR #] — type: description | Date`
 
 ---
 
+## [PR #28] — feat: Investment asset allocation, cashflow time scopes & transfer accounting | 2026-10-25
+
+### feat: Investment Asset Allocation & Multi-Tier Schema
+- `feat` `models.py`: Added `AssetClass` enum (`mutualFunds`, `gold`, `stocks`, `bonds`, `crypto`, `other`), `asset_class` column on `accounts`, and `is_transfer`, `transfer_destination_account_id` on `transactions` with explicit foreign key definitions.
+- `feat` `main.py`: Extended startup auto-migrations to safely add `asset_class`, `is_transfer`, and `transfer_destination_account_id` on PostgreSQL and SQLite.
+- `feat` `schemas.py`: Added `AssetAllocationSlice`, `asset_allocation` breakdown in `InvestmentAnalyticsResponse`, and `total_portfolio_wealth` in `NetWorthSummary`.
+- `feat` `analytics.py`: Added asset allocation percentage calculation grouped by asset class and enabled Day / Month / Year time scoping for cashflow analytics.
+- `test` `test_investment.py`: Added `TC-INV-005` verifying sorted asset allocation slices (37/37 tests passing).
+
+### feat: Angular Frontend Convergence
+- `feat` `expensify.models.ts`: Added `AssetClass` type and label mappings with icons & colors, updated `Account`, `NetWorthSummary`, and `InvestmentAnalytics`.
+- `feat` `api.service.ts`: Added `fetchScopedAnalytics(scope, year, month, day)`.
+- `feat` `app.ts` & `app.html`:
+  - **Overview**: Added Total Portfolio Wealth card (`Liquid Cash + Investments`).
+  - **Account Settings**: Added colored asset class badges on investment cards and labeled bank accounts as "Debit / Bank".
+  - **Add Account Modal**: Interactive Asset Class selector when choosing Investment Portfolio.
+  - **Analytics Tab**: Segment switcher between **Portfolio & Allocation** (Donut chart & legend) and **Cashflow & Savings** (Day/Month/Year time steppers and savings gauge).
+  - **Transfer Modal**: Contextual guidance callout when transferring to an investment account.
+
+---
+
 ## [PR #27] — feat: Investment accounts, % income invested analytics & rotating insights strip | 2026-08-11
 
 ### feat: Investment Account Type (Option C Architecture)

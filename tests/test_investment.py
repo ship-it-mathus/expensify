@@ -88,3 +88,33 @@ def test_tc_inv_004_investment_analytics_no_investments(client):
     assert data["total_invested"] == 0.0
     assert data["pct_income_invested"] == 0.0
     assert data["total_investment_balance"] == 0.0
+
+
+def test_tc_inv_005_investment_asset_class_and_allocation(client):
+    """TC-INV-005: Investment accounts with asset_class generate allocation pie chart slices."""
+    client.post("/api/v1/accounts", json={
+        "name": "Gold ETF", "account_type": "investment", "balance": 50000.0, "asset_class": "gold"
+    })
+    client.post("/api/v1/accounts", json={
+        "name": "Nifty Index Fund", "account_type": "investment", "balance": 30000.0, "asset_class": "mutualFunds"
+    })
+    client.post("/api/v1/accounts", json={
+        "name": "Govt Bonds", "account_type": "investment", "balance": 20000.0, "asset_class": "bonds"
+    })
+
+    res = client.get("/api/v1/analytics/investment")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total_investment_balance"] == 100000.0
+    
+    slices = data["asset_allocation"]
+    assert len(slices) == 3
+    # Check top slice is Gold (50%)
+    assert slices[0]["asset_class"] == "gold"
+    assert slices[0]["percentage"] == 50.0
+    # Second is mutualFunds (30%)
+    assert slices[1]["asset_class"] == "mutualFunds"
+    assert slices[1]["percentage"] == 30.0
+    # Third is bonds (20%)
+    assert slices[2]["asset_class"] == "bonds"
+    assert slices[2]["percentage"] == 20.0

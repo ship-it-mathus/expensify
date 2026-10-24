@@ -227,6 +227,10 @@
                 <div style="font-size: 0.78rem; color: #818cf8;">Investment Portfolio</div>
                 <div style="font-size: 1.35rem; font-weight: 800; color: #818cf8; margin-top: 4px;">{{ (api.summary()?.total_investment_balance || 0) | currency:'INR':'symbol':'1.2-2' }}</div>
               </div>
+              <div style="background: rgba(245,158,11,0.08); padding: 16px; border-radius: 12px; border: 1px solid rgba(245,158,11,0.3);">
+                <div style="font-size: 0.78rem; color: #f59e0b; font-weight: 700;">Total Portfolio Wealth</div>
+                <div style="font-size: 1.35rem; font-weight: 800; color: #f59e0b; margin-top: 4px;">{{ ((api.summary()?.actual_liquid_money || 0) + (api.summary()?.total_investment_balance || 0)) | currency:'INR':'symbol':'1.2-2' }}</div>
+              </div>
             }
           </div>
         </div>
@@ -352,9 +356,16 @@
                   </div>
                   <div>
                     <h3 style="font-size: 1rem; font-weight: 700;">{{ acc.name }}</h3>
-                    <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">
-                      {{ acc.account_type === 'bank' ? 'Bank Account' : acc.account_type === 'investment' ? 'Investment Portfolio' : 'Credit Card' }}
-                    </span>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                      <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">
+                        {{ acc.account_type === 'bank' ? 'Debit / Bank' : acc.account_type === 'investment' ? 'Investment' : 'Credit Card' }}
+                      </span>
+                      @if (acc.account_type === 'investment') {
+                        <span [style.background-color]="getAssetClassBadge(acc.asset_class).color + '25'" [style.color]="getAssetClassBadge(acc.asset_class).color" style="font-size: 0.7rem; padding: 1px 7px; border-radius: 6px; font-weight: 700;">
+                          {{ getAssetClassBadge(acc.asset_class).label }}
+                        </span>
+                      }
+                    </div>
                   </div>
                 </div>
 
@@ -370,7 +381,7 @@
 
               <div style="font-size: 0.78rem; color: var(--text-muted);">
                 @if (acc.account_type === 'investment') {
-                  <span style="color: #6366f1; font-weight: 600;">📈 Investment Portfolio — always tracked separately</span>
+                  <span style="color: #6366f1; font-weight: 600;">📈 Asset Portfolio — tracked separately, excluded from living expenses</span>
                 } @else {
                   Status: {{ acc.include_in_net_worth ? 'Included in Net Worth' : 'Excluded from Net Worth' }}
                 }
@@ -443,69 +454,214 @@
     @if (activeTab() === 'analytics') {
       <div class="base-grid">
 
-        <!-- ── Rotating Insights Strip ── -->
-        <div style="grid-column: 1 / -1;">
-          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: block; margin-bottom: 10px;">Quick Insights & Fun Stats (10s Cycle)</span>
-          <app-insights-carousel [cards]="insightCards"></app-insights-carousel>
+        <!-- ── Subtab Switcher (Portfolio vs Cashflow) ── -->
+        <div style="grid-column: 1 / -1; display: flex; gap: 10px; background: #0f172a; padding: 6px; border-radius: 12px; border: var(--border-subtle);">
+          <button
+            type="button"
+            (click)="analyticsSubTab.set('portfolio')"
+            [style.background-color]="analyticsSubTab() === 'portfolio' ? 'var(--accent-primary)' : 'transparent'"
+            [style.color]="analyticsSubTab() === 'portfolio' ? '#ffffff' : 'var(--text-muted)'"
+            style="flex: 1; padding: 10px 16px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
+            <span class="material-symbols-outlined" style="font-size: 1.15rem;">pie_chart</span>
+            Portfolio & Allocation
+          </button>
+          <button
+            type="button"
+            (click)="analyticsSubTab.set('cashflow')"
+            [style.background-color]="analyticsSubTab() === 'cashflow' ? 'var(--accent-primary)' : 'transparent'"
+            [style.color]="analyticsSubTab() === 'cashflow' ? '#ffffff' : 'var(--text-muted)'"
+            style="flex: 1; padding: 10px 16px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
+            <span class="material-symbols-outlined" style="font-size: 1.15rem;">savings</span>
+            Cashflow & Savings
+          </button>
         </div>
 
-        <!-- ── Savings Rate Hero ── -->
-        <div class="base-card" style="grid-column: 1 / -1; text-align: center;">
-          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">{{ currentMonthLabel }} · Savings Performance</span>
-          <h2 style="font-size: 3.2rem; font-weight: 900; margin: 6px 0 4px; color: var(--accent-primary);">
-            {{ api.analytics()?.savings_rate_percentage || 0 }}%
-          </h2>
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Savings Rate</p>
+        <!-- ═════════ SECTION A: PORTFOLIO & ALLOCATION ═════════ -->
+        @if (analyticsSubTab() === 'portfolio') {
+          <!-- Total Portfolio Wealth Hero -->
+          <div class="base-card" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(15,23,42,0.95)); border: 1px solid rgba(245,158,11,0.35);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <span style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 800; color: #f59e0b; display: flex; align-items: center; gap: 6px;">
+                  <span class="material-symbols-outlined" style="font-size: 1rem;">sparkles</span>
+                  Total Wealth & Assets
+                </span>
+                <h2 style="font-size: 2.8rem; font-weight: 900; margin: 8px 0 4px; color: #ffffff;">
+                  {{ ((api.summary()?.actual_liquid_money || 0) + (api.summary()?.total_investment_balance || 0)) | currency:'INR':'symbol':'1.0-0' }}
+                </h2>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+                  Liquid Cash ({{ (api.summary()?.actual_liquid_money || 0) | currency:'INR':'symbol':'1.0-0' }}) + Investments ({{ (api.summary()?.total_investment_balance || 0) | currency:'INR':'symbol':'1.0-0' }})
+                </p>
+              </div>
 
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px;">
-            <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); padding: 14px; border-radius: 12px;">
-              <div style="font-size: 0.72rem; color: #10b981; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Income</div>
-              <div style="font-size: 1.15rem; font-weight: 800; color: #10b981; margin-top: 4px;">{{ (api.analytics()?.total_income || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
-            </div>
-            <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); padding: 14px; border-radius: 12px;">
-              <div style="font-size: 0.72rem; color: #ef4444; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Expense</div>
-              <div style="font-size: 1.15rem; font-weight: 800; color: #ef4444; margin-top: 4px;">{{ (api.analytics()?.total_expense || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
-            </div>
-            <div style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.25); padding: 14px; border-radius: 12px;">
-              <div style="font-size: 0.72rem; color: #6366f1; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Saved</div>
-              <div style="font-size: 1.15rem; font-weight: 800; color: #6366f1; margin-top: 4px;">{{ (api.analytics()?.net_savings || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
+              <!-- Invested this month pill -->
+              <div style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35); padding: 12px 18px; border-radius: 14px; text-align: right;">
+                <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #10b981;">Invested This Month</span>
+                <div style="font-size: 1.4rem; font-weight: 800; color: #10b981; margin-top: 2px;">
+                  {{ (api.investmentAnalytics()?.total_invested || 0) | currency:'INR':'symbol':'1.0-0' }}
+                </div>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">
+                  {{ api.investmentAnalytics()?.pct_income_invested || 0 }}% of monthly income
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- ── Bar Chart: Income vs Expense vs Savings ── -->
-        <div class="base-card" style="grid-column: 1 / -1;">
-          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: block; margin-bottom: 16px;">Monthly Breakdown</span>
-          <app-bar-chart
-            [income]="api.analytics()?.total_income || 0"
-            [expense]="api.analytics()?.total_expense || 0"
-            [savings]="api.analytics()?.net_savings || 0"
-            [monthLabel]="currentMonthLabel">
-          </app-bar-chart>
-        </div>
+          <!-- Asset Allocation Pie Chart -->
+          <div class="base-card" style="grid-column: 1 / -1;">
+            <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: block; margin-bottom: 16px;">
+              Investment Asset Allocation
+            </span>
+            <app-donut-chart
+              [labels]="assetAllocationLabels"
+              [values]="assetAllocationValues">
+            </app-donut-chart>
 
-        <!-- ── Donut Chart: Category Spending ── -->
-        <div class="base-card" style="grid-column: 1 / -1;">
-          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: block; margin-bottom: 16px;">Spending by Category</span>
-          <app-donut-chart
-            [labels]="donutLabels"
-            [values]="donutValues">
-          </app-donut-chart>
+            <!-- Asset class legend breakdown -->
+            @if ((api.investmentAnalytics()?.asset_allocation?.length || 0) > 0) {
+              <div style="margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+                @for (item of api.investmentAnalytics()?.asset_allocation || []; track item.asset_class) {
+                  <div style="background: rgba(255,255,255,0.03); border: var(--border-subtle); padding: 12px 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span class="material-symbols-outlined" [style.color]="getAssetClassBadge(item.asset_class).color" style="font-size: 1.2rem;">
+                        {{ getAssetClassBadge(item.asset_class).icon }}
+                      </span>
+                      <span style="font-weight: 700; font-size: 0.9rem;">{{ getAssetClassBadge(item.asset_class).label }}</span>
+                    </div>
+                    <div style="text-align: right;">
+                      <div style="font-weight: 800; font-size: 0.95rem; color: #ffffff;">{{ item.amount | currency:'INR':'symbol':'1.0-0' }}</div>
+                      <span [style.color]="getAssetClassBadge(item.asset_class).color" style="font-size: 0.75rem; font-weight: 700;">{{ item.percentage }}%</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p style="text-align: center; color: var(--text-muted); margin-top: 16px; font-size: 0.88rem;">
+                No investment accounts added yet. Add an investment account in Settings to see your asset allocation breakdown.
+              </p>
+            }
+          </div>
+        }
 
-          <!-- Category list with amounts -->
-          @if ((api.analytics()?.categories?.length || 0) > 0) {
-            <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-              @for (cat of api.analytics()?.categories || []; track cat.category) {
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--accent-primary); flex-shrink: 0;"></div>
-                  <span style="flex: 1; font-size: 0.85rem; color: var(--text-secondary); text-transform: capitalize;">{{ cat.category }}</span>
-                  <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-danger);">{{ cat.total_amount | currency:'INR':'symbol':'1.0-0' }}</span>
-                  <span style="font-size: 0.78rem; color: var(--text-muted); min-width: 42px; text-align: right;">{{ cat.percentage }}%</span>
-                </div>
-              }
+        <!-- ═════════ SECTION B: CASHFLOW & SAVINGS ═════════ -->
+        @if (analyticsSubTab() === 'cashflow') {
+          <!-- Scope Switcher & Date Stepper -->
+          <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: #0f172a; padding: 12px 18px; border-radius: 14px; border: var(--border-subtle);">
+            <!-- Scope Buttons (Day / Month / Year) -->
+            <div style="display: flex; gap: 6px;">
+              <button
+                type="button"
+                (click)="setTimeScope('day')"
+                [style.background-color]="timeScope() === 'day' ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)'"
+                [style.color]="timeScope() === 'day' ? '#fff' : 'var(--text-muted)'"
+                style="border: none; padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
+                Day
+              </button>
+              <button
+                type="button"
+                (click)="setTimeScope('month')"
+                [style.background-color]="timeScope() === 'month' ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)'"
+                [style.color]="timeScope() === 'month' ? '#fff' : 'var(--text-muted)'"
+                style="border: none; padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
+                Month
+              </button>
+              <button
+                type="button"
+                (click)="setTimeScope('year')"
+                [style.background-color]="timeScope() === 'year' ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)'"
+                [style.color]="timeScope() === 'year' ? '#fff' : 'var(--text-muted)'"
+                style="border: none; padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
+                Year
+              </button>
             </div>
-          }
-        </div>
+
+            <!-- Date Stepper (◂ Date ▸) -->
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button
+                type="button"
+                (click)="stepScope(-1)"
+                style="background: rgba(255,255,255,0.06); border: var(--border-subtle); color: #fff; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">chevron_left</span>
+              </button>
+              <span style="font-weight: 800; font-size: 0.95rem; min-width: 140px; text-align: center;">
+                {{ formattedScopeDate }}
+              </span>
+              <button
+                type="button"
+                (click)="stepScope(1)"
+                style="background: rgba(255,255,255,0.06); border: var(--border-subtle); color: #fff; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">chevron_right</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ── Rotating Insights Strip ── -->
+          <div style="grid-column: 1 / -1;">
+            <app-insights-carousel [cards]="insightCards"></app-insights-carousel>
+          </div>
+
+          <!-- ── Savings Rate Hero ── -->
+          <div class="base-card" style="grid-column: 1 / -1; text-align: center;">
+            <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">
+              {{ formattedScopeDate }} · Net Savings Performance
+            </span>
+            <h2 style="font-size: 3.2rem; font-weight: 900; margin: 6px 0 4px; color: var(--accent-primary);">
+              {{ api.analytics()?.savings_rate_percentage || 0 }}%
+            </h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Savings Rate</p>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px;">
+              <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); padding: 14px; border-radius: 12px;">
+                <div style="font-size: 0.72rem; color: #10b981; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Income</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #10b981; margin-top: 4px;">{{ (api.analytics()?.total_income || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
+              </div>
+              <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); padding: 14px; border-radius: 12px;">
+                <div style="font-size: 0.72rem; color: #ef4444; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Living Expense</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #ef4444; margin-top: 4px;">{{ (api.analytics()?.total_expense || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
+              </div>
+              <div style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.25); padding: 14px; border-radius: 12px;">
+                <div style="font-size: 0.72rem; color: #6366f1; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Net Saved</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #6366f1; margin-top: 4px;">{{ (api.analytics()?.net_savings || 0) | currency:'INR':'symbol':'1.0-0' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Bar Chart: Income vs Expense vs Savings ── -->
+          <div class="base-card" style="grid-column: 1 / -1;">
+            <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: block; margin-bottom: 16px;">
+              Income vs Living Expense vs Savings
+            </span>
+            <app-bar-chart
+              [income]="api.analytics()?.total_income || 0"
+              [expense]="api.analytics()?.total_expense || 0"
+              [savings]="api.analytics()?.net_savings || 0"
+              [monthLabel]="formattedScopeDate">
+            </app-bar-chart>
+          </div>
+
+          <!-- ── Donut Chart: Category Spending ── -->
+          <div class="base-card" style="grid-column: 1 / -1;">
+            <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: block; margin-bottom: 16px;">Spending by Category</span>
+            <app-donut-chart
+              [labels]="donutLabels"
+              [values]="donutValues">
+            </app-donut-chart>
+
+            <!-- Category list with amounts -->
+            @if ((api.analytics()?.categories?.length || 0) > 0) {
+              <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                @for (cat of api.analytics()?.categories || []; track cat.category) {
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--accent-primary); flex-shrink: 0;"></div>
+                    <span style="flex: 1; font-size: 0.85rem; color: var(--text-secondary); text-transform: capitalize;">{{ cat.category }}</span>
+                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-danger);">{{ cat.total_amount | currency:'INR':'symbol':'1.0-0' }}</span>
+                    <span style="font-size: 0.78rem; color: var(--text-muted); min-width: 42px; text-align: right;">{{ cat.percentage }}%</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
 
       </div>
     }
@@ -542,17 +698,25 @@
           <select class="form-field" [(ngModel)]="transferFromId" name="tFrom" required>
             <option value="" disabled selected>From Source Account</option>
             @for (acc of api.accounts(); track acc.id) {
-              <option [value]="acc.id">{{ acc.name }} ({{ acc.account_type | uppercase }})</option>
+              <option [value]="acc.id">{{ acc.name }} ({{ acc.account_type === 'bank' ? 'DEBIT / BANK' : (acc.account_type | uppercase) }})</option>
             }
           </select>
           <select class="form-field" [(ngModel)]="transferToId" name="tTo" required>
             <option value="" disabled selected>To Destination Account</option>
             @for (acc of api.accounts(); track acc.id) {
-              <option [value]="acc.id">{{ acc.name }} ({{ acc.account_type | uppercase }})</option>
+              <option [value]="acc.id">{{ acc.name }} ({{ acc.account_type === 'bank' ? 'DEBIT / BANK' : (acc.account_type | uppercase) }})</option>
             }
           </select>
+
+          @if (isTransferToInvestment()) {
+            <div style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); padding: 10px 14px; border-radius: 10px; font-size: 0.82rem; color: #10b981; display: flex; align-items: center; gap: 8px;">
+              <span class="material-symbols-outlined" style="font-size: 1.2rem;">trending_up</span>
+              <span><strong>Investment Transfer:</strong> Funds moved into this account grow your portfolio wealth and are never counted as living expenses.</span>
+            </div>
+          }
+
           <input type="number" step="0.01" class="form-field" [(ngModel)]="transferAmount" name="tAmount" placeholder="Transfer Amount (₹)" required>
-          <input type="text" class="form-field" [(ngModel)]="transferDescription" name="tDesc" placeholder="Note (e.g. Credit Card Payment)">
+          <input type="text" class="form-field" [(ngModel)]="transferDescription" name="tDesc" placeholder="Note (e.g. Monthly SIP, Gold Purchase)">
           <div style="display: flex; justify-content: flex-end; gap: 10px;">
             <button type="button" (click)="closeModals()" style="background: none; border: none; cursor: pointer; font-weight: 600; padding: 10px 14px; color: var(--text-muted);">Cancel</button>
             <button type="submit" class="btn-primary" [disabled]="!transferFromId || !transferToId || !transferAmount || transferAmount <= 0 || transferFromId === transferToId">Execute Transfer</button>
@@ -571,10 +735,23 @@
           <input type="text" class="form-field" [(ngModel)]="newAccName" name="accName" placeholder="Account Name (e.g. Zerodha Portfolio, HDFC Bank)" required>
 
           <select class="form-field" [(ngModel)]="newAccType" name="accType" required>
-            <option value="bank">Bank Account</option>
+            <option value="bank">Debit / Bank Account</option>
             <option value="credit_card">Credit Card</option>
-            <option value="investment">Investment Portfolio (SIP / Stocks / MF)</option>
+            <option value="investment">Investment Portfolio (SIP / Stocks / Gold / MF)</option>
           </select>
+
+          @if (newAccType === 'investment') {
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">
+                Asset Class
+              </label>
+              <select class="form-field" [(ngModel)]="newAccAssetClass" name="accAssetClass" required>
+                @for (opt of assetClassOptions; track opt.key) {
+                  <option [value]="opt.key">{{ opt.label }}</option>
+                }
+              </select>
+            </div>
+          }
 
           <input type="number" step="0.01" class="form-field" [(ngModel)]="newAccBalance" name="accBalance" placeholder="Initial Balance (₹)" required>
           <input type="text" class="form-field" [(ngModel)]="newAccNotes" name="accNotes" placeholder="Notes (Optional)">
