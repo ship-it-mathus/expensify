@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, effect } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpensifyApiService } from './services/api.service';
-import { AccountType, InsightCard, Transaction, TransactionType } from './models/expensify.models';
+import { AccountType, InsightCard, Transaction, TransactionType, ASSET_CLASS_LABELS } from './models/expensify.models';
 import { AuthService } from './services/auth.service';
 import { DonutChartComponent, BarChartComponent, InsightsCarouselComponent } from './components/charts.component';
 
@@ -29,6 +29,11 @@ export class App implements OnInit {
 
   // Active Tab Signal
   activeTab = signal<'overview' | 'settings' | 'history' | 'analytics' | 'new-transaction'>('overview');
+  analyticsSubTab = signal<'portfolio' | 'cashflow'>('portfolio');
+
+  // Time Scope Signals for Cashflow Analytics
+  timeScope = signal<'day' | 'month' | 'year'>('month');
+  selectedDate = signal<Date>(new Date());
 
   // Auth Form Models
   authEmail = '';
@@ -49,8 +54,11 @@ export class App implements OnInit {
 
   newAccName = '';
   newAccType: AccountType = AccountType.BANK;
+  newAccAssetClass = 'mutualFunds';
   newAccBalance: number | null = null;
   newAccNotes = '';
+
+  assetClassOptions = Object.entries(ASSET_CLASS_LABELS).map(([key, val]) => ({ key, ...val }));
 
   transferFromId = '';
   transferToId = '';
@@ -68,9 +76,31 @@ export class App implements OnInit {
     return (this.api.analytics()?.categories ?? []).map(c => c.total_amount);
   }
 
+  get assetAllocationLabels(): string[] {
+    return (this.api.investmentAnalytics()?.asset_allocation ?? []).map(a =>
+      ASSET_CLASS_LABELS[a.asset_class]?.label ?? a.asset_class
+    );
+  }
+
+  get assetAllocationValues(): number[] {
+    return (this.api.investmentAnalytics()?.asset_allocation ?? []).map(a => a.amount);
+  }
+
   get currentMonthLabel(): string {
     const now = new Date();
     return now.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+
+  get formattedScopeDate(): string {
+    const d = this.selectedDate();
+    const sc = this.timeScope();
+    if (sc === 'day') {
+      return d.toLocaleDateString('default', { day: 'numeric', month: 'short', year: 'numeric' });
+    } else if (sc === 'month') {
+      return d.toLocaleDateString('default', { month: 'long', year: 'numeric' });
+    } else {
+      return d.getFullYear().toString();
+    }
   }
 
   /**
@@ -254,6 +284,40 @@ export class App implements OnInit {
     this.isAddAccountModalOpen.set(false);
   }
 
+  getAssetClassBadge(cls?: string) {
+    return ASSET_CLASS_LABELS[cls || 'other'] || ASSET_CLASS_LABELS['other'];
+  }
+
+  isTransferToInvestment(): boolean {
+    const dst = this.api.accounts().find(a => a.id === this.transferToId);
+    return dst?.account_type === AccountType.INVESTMENT;
+  }
+
+  setTimeScope(scope: 'day' | 'month' | 'year') {
+    this.timeScope.set(scope);
+    this.fetchScopedData();
+  }
+
+  stepScope(offset: number) {
+    const d = new Date(this.selectedDate());
+    const sc = this.timeScope();
+    if (sc === 'day') {
+      d.setDate(d.getDate() + offset);
+    } else if (sc === 'month') {
+      d.setMonth(d.getMonth() + offset);
+    } else if (sc === 'year') {
+      d.setFullYear(d.getFullYear() + offset);
+    }
+    this.selectedDate.set(d);
+    this.fetchScopedData();
+  }
+
+  fetchScopedData() {
+    const d = this.selectedDate();
+    const sc = this.timeScope();
+    this.api.fetchScopedAnalytics(sc, d.getFullYear(), d.getMonth() + 1, d.getDate());
+  }
+
   async handleCreateAccount() {
     if (!this.newAccName || this.newAccBalance === null) return;
     try {
@@ -261,10 +325,12 @@ export class App implements OnInit {
         name: this.newAccName,
         account_type: this.newAccType,
         balance: Number(this.newAccBalance),
+        asset_class: this.newAccType === AccountType.INVESTMENT ? this.newAccAssetClass : undefined,
         notes: this.newAccNotes || undefined
       });
       this.newAccName = '';
       this.newAccType = AccountType.BANK;
+      this.newAccAssetClass = 'mutualFunds';
       this.newAccBalance = null;
       this.newAccNotes = '';
       this.closeModals();

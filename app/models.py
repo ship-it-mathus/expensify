@@ -13,6 +13,14 @@ class AccountType(str, enum.Enum):
     CREDIT_CARD = "credit_card"
     INVESTMENT = "investment"
 
+class AssetClass(str, enum.Enum):
+    MUTUAL_FUNDS = "mutualFunds"
+    GOLD = "gold"
+    STOCKS = "stocks"
+    BONDS = "bonds"
+    CRYPTO = "crypto"
+    OTHER = "other"
+
 class TransactionType(str, enum.Enum):
     INCOME = "income"
     EXPENSE = "expense"
@@ -38,6 +46,7 @@ class Account(Base):
     account_type = Column(Enum(AccountType), nullable=False, default=AccountType.BANK)
     balance = Column(Float, nullable=False, default=0.0)
     include_in_net_worth = Column(Boolean, nullable=False, default=True)
+    asset_class = Column(String(50), nullable=True, default=None)
     currency = Column(String(10), nullable=False, default="INR")
     notes = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -48,7 +57,7 @@ class Account(Base):
     )
 
     user = relationship("User", back_populates="accounts")
-    transactions = relationship("Transaction", back_populates="account", cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="account", cascade="all, delete-orphan", foreign_keys="[Transaction.account_id]")
 
 class Category(Base):
     __tablename__ = "categories"
@@ -74,6 +83,8 @@ class Transaction(Base):
     amount = Column(Float, nullable=False)
     category = Column(String(50), nullable=False, default="other", index=True)
     description = Column(String(255), nullable=True)
+    is_transfer = Column(Boolean, nullable=False, default=False)
+    transfer_destination_account_id = Column(String(26), ForeignKey("accounts.id", ondelete="SET NULL"), nullable=True, index=True)
     date = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
@@ -83,4 +94,4 @@ class Transaction(Base):
     )
 
     user = relationship("User", back_populates="transactions")
-    account = relationship("Account", back_populates="transactions")
+    account = relationship("Account", back_populates="transactions", foreign_keys=[account_id])

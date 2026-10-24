@@ -13,10 +13,31 @@ from sqlalchemy import text
 Base.metadata.create_all(bind=engine)
 
 def run_startup_migrations():
-    """Auto-applies schema updates to production PostgreSQL (Supabase)."""
-    if settings.DATABASE_URL.startswith("sqlite"):
-        return
+    """Auto-applies schema updates to production PostgreSQL (Supabase) and SQLite."""
     with engine.connect() as conn:
+        if settings.DATABASE_URL.startswith("sqlite"):
+            # SQLite auto migrations
+            try:
+                acc_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(accounts);")).fetchall()]
+                if "asset_class" not in acc_cols:
+                    conn.execute(text("ALTER TABLE accounts ADD COLUMN asset_class VARCHAR(50);"))
+                    conn.commit()
+            except Exception as e:
+                print(f"[Migration] SQLite accounts.asset_class notice: {e}")
+
+            try:
+                tx_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(transactions);")).fetchall()]
+                if "is_transfer" not in tx_cols:
+                    conn.execute(text("ALTER TABLE transactions ADD COLUMN is_transfer BOOLEAN DEFAULT 0;"))
+                    conn.commit()
+                if "transfer_destination_account_id" not in tx_cols:
+                    conn.execute(text("ALTER TABLE transactions ADD COLUMN transfer_destination_account_id VARCHAR(26);"))
+                    conn.commit()
+            except Exception as e:
+                print(f"[Migration] SQLite transactions columns notice: {e}")
+            return
+
+        # PostgreSQL (Supabase) migrations
         # Add parent_id column to categories table if missing
         try:
             conn.execute(text("ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_id VARCHAR(26) REFERENCES categories(id) ON DELETE SET NULL;"))
@@ -37,6 +58,21 @@ def run_startup_migrations():
             conn.execution_options(isolation_level="AUTOCOMMIT").execute(text("ALTER TYPE accounttype ADD VALUE IF NOT EXISTS 'investment';"))
         except Exception as e:
             print(f"[Migration] accounttype enum notice: {e}")
+
+        # Add asset_class to accounts table
+        try:
+            conn.execute(text("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS asset_class VARCHAR(50);"))
+            conn.commit()
+        except Exception as e:
+            print(f"[Migration] accounts.asset_class notice: {e}")
+
+        # Add is_transfer & transfer_destination_account_id to transactions table
+        try:
+            conn.execute(text("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS is_transfer BOOLEAN DEFAULT FALSE;"))
+            conn.execute(text("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_destination_account_id VARCHAR(26) REFERENCES accounts(id) ON DELETE SET NULL;"))
+            conn.commit()
+        except Exception as e:
+            print(f"[Migration] transactions transfer columns notice: {e}")
 
 try:
     run_startup_migrations()

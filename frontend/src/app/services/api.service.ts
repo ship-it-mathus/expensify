@@ -60,6 +60,19 @@ export class ExpensifyApiService {
     }
   }
 
+  async fetchScopedAnalytics(scope: 'day' | 'month' | 'year' = 'month', year?: number, month?: number, day?: number) {
+    let params = `?scope=${scope}`;
+    if (year) params += `&year=${year}`;
+    if (month) params += `&month=${month}`;
+    if (day) params += `&day=${day}`;
+    try {
+      const ana = await firstValueFrom(this.http.get<MonthlyAnalytics>(`${this.baseUrl}/analytics/monthly${params}`));
+      this.analytics.set(ana);
+    } catch (err) {
+      console.error('Failed to fetch scoped analytics:', err);
+    }
+  }
+
   async createAccount(accountIn: AccountCreate): Promise<Account> {
     const acc = await firstValueFrom(this.http.post<Account>(`${this.baseUrl}/accounts`, accountIn));
     await this.refreshAll();

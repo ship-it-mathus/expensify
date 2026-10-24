@@ -4,6 +4,17 @@ export enum AccountType {
   INVESTMENT = 'investment'
 }
 
+export type AssetClass = 'mutualFunds' | 'gold' | 'stocks' | 'bonds' | 'crypto' | 'other';
+
+export const ASSET_CLASS_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+  mutualFunds: { label: 'Mutual Funds', icon: 'pie_chart', color: '#10b981' },
+  gold: { label: 'Gold', icon: 'monetization_on', color: '#f59e0b' },
+  stocks: { label: 'Stocks', icon: 'trending_up', color: '#38bdf8' },
+  bonds: { label: 'Bonds', icon: 'account_balance', color: '#8b5cf6' },
+  crypto: { label: 'Crypto', icon: 'currency_bitcoin', color: '#ec4899' },
+  other: { label: 'Other', icon: 'category', color: '#64748b' }
+};
+
 export enum TransactionType {
   INCOME = 'income',
   EXPENSE = 'expense'
@@ -15,17 +26,18 @@ export interface Account {
   account_type: AccountType;
   balance: number;
   include_in_net_worth: boolean;
+  asset_class?: string;
   currency: string;
   notes?: string;
   created_at: string;
   updated_at: string;
 }
 
-
 export interface AccountCreate {
   name: string;
   account_type: AccountType;
   balance: number;
+  asset_class?: string;
   currency?: string;
   notes?: string;
 }
@@ -34,6 +46,7 @@ export interface AccountUpdate {
   name?: string;
   account_type?: AccountType;
   balance?: number;
+  asset_class?: string;
   include_in_net_worth?: boolean;
   notes?: string;
 }
@@ -43,6 +56,7 @@ export interface NetWorthSummary {
   total_credit_card_dues: number;
   total_investment_balance: number;
   actual_liquid_money: number;
+  total_portfolio_wealth?: number;
   included_accounts_count: number;
   excluded_accounts_count: number;
   currency: string;
@@ -64,6 +78,8 @@ export interface Transaction {
   amount: number;
   category: string;
   description?: string;
+  is_transfer?: boolean;
+  transfer_destination_account_id?: string;
   date: string;
   created_at: string;
   updated_at: string;
@@ -75,6 +91,8 @@ export interface TransactionCreate {
   amount: number;
   category: string;
   description?: string;
+  is_transfer?: boolean;
+  transfer_destination_account_id?: string;
 }
 
 export interface TransferCreate {
@@ -106,13 +124,21 @@ export interface CategoryItem {
 }
 
 export interface MonthlyAnalytics {
+  scope?: string;
   year: number;
   month: number;
+  day?: number;
   total_income: number;
   total_expense: number;
   net_savings: number;
   savings_rate_percentage: number;
   categories: CategoryItem[];
+}
+
+export interface AssetAllocationSlice {
+  asset_class: string;
+  amount: number;
+  percentage: number;
 }
 
 export interface InvestmentAnalytics {
@@ -122,6 +148,8 @@ export interface InvestmentAnalytics {
   total_income: number;
   pct_income_invested: number;
   total_investment_balance: number;
+  total_portfolio_wealth?: number;
+  asset_allocation?: AssetAllocationSlice[];
 }
 
 /** A single computed insight card shown in the rotating insights strip. */

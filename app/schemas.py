@@ -9,6 +9,7 @@ class AccountBase(BaseModel):
     account_type: AccountType = Field(..., json_schema_extra={"example": AccountType.BANK})
     balance: float = Field(default=0.0, description="Bank balance or Credit Card due amount", json_schema_extra={"example": 50000.0})
     include_in_net_worth: bool = Field(default=True, description="Set to False for Emergency Fund or hidden accounts")
+    asset_class: Optional[str] = Field(default=None, description="Asset class for investment accounts: mutualFunds, gold, stocks, bonds, crypto, other", json_schema_extra={"example": "mutualFunds"})
     currency: str = Field(default="INR", json_schema_extra={"example": "INR"})
     notes: Optional[str] = Field(default=None, json_schema_extra={"example": "Main salary account"})
 
@@ -20,6 +21,7 @@ class AccountUpdate(BaseModel):
     account_type: Optional[AccountType] = None
     balance: Optional[float] = None
     include_in_net_worth: Optional[bool] = None
+    asset_class: Optional[str] = None
     currency: Optional[str] = None
     notes: Optional[str] = None
 
@@ -35,6 +37,7 @@ class NetWorthSummary(BaseModel):
     total_credit_card_dues: float = Field(..., description="Sum of active Credit Card Dues included in calculation")
     total_investment_balance: float = Field(..., description="Sum of all Investment Account balances (informational)")
     actual_liquid_money: float = Field(..., description="Net Money (Bank Balance - Credit Card Dues)")
+    total_portfolio_wealth: float = Field(default=0.0, description="Total wealth (Liquid cash + Investments)")
     included_accounts_count: int = Field(..., description="Number of accounts included in calculation")
     excluded_accounts_count: int = Field(..., description="Number of accounts hidden/excluded from calculation")
     currency: str = Field(default="INR")
@@ -63,6 +66,8 @@ class TransactionBase(BaseModel):
     amount: float = Field(..., gt=0, description="Positive transaction amount", json_schema_extra={"example": 450.0})
     category: str = Field(default="food", json_schema_extra={"example": "food"}, description="e.g. food, salary, rent, shopping, utilities, transfer, bill_payment")
     description: Optional[str] = Field(default=None, json_schema_extra={"example": "Dinner with friends"})
+    is_transfer: bool = Field(default=False, description="Flag indicating inter-account transfer")
+    transfer_destination_account_id: Optional[str] = Field(default=None, description="Destination account if transfer")
     date: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc), description="Transaction timestamp")
 
 class TransactionCreate(TransactionBase):
@@ -74,6 +79,8 @@ class TransactionUpdate(BaseModel):
     amount: Optional[float] = Field(default=None, gt=0)
     category: Optional[str] = None
     description: Optional[str] = None
+    is_transfer: Optional[bool] = None
+    transfer_destination_account_id: Optional[str] = None
     date: Optional[datetime] = None
 
 class TransactionResponse(TransactionBase):
@@ -93,13 +100,20 @@ class CategoryBreakdownResponse(BaseModel):
     categories: List[CategoryItem]
 
 class MonthlyAnalyticsResponse(BaseModel):
+    scope: str = Field(default="month", description="day, month, or year")
     year: int
     month: int
+    day: Optional[int] = None
     total_income: float
     total_expense: float
     net_savings: float
     savings_rate_percentage: float
     categories: List[CategoryItem]
+
+class AssetAllocationSlice(BaseModel):
+    asset_class: str
+    amount: float
+    percentage: float
 
 class InvestmentAnalyticsResponse(BaseModel):
     year: int
@@ -108,6 +122,8 @@ class InvestmentAnalyticsResponse(BaseModel):
     total_income: float = Field(..., description="Total income this month (for percentage calculation)")
     pct_income_invested: float = Field(..., description="Percentage of monthly income invested")
     total_investment_balance: float = Field(..., description="Total current value across all investment accounts")
+    total_portfolio_wealth: float = Field(default=0.0, description="Total portfolio wealth (Liquid cash + Investments)")
+    asset_allocation: List[AssetAllocationSlice] = Field(default_factory=list, description="Breakdown of investments by asset class")
 
 # Transfer Schemas
 class TransferCreate(BaseModel):
