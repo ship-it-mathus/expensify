@@ -34,6 +34,8 @@ This file catalogs every unit and integration test case implemented in the Expen
 | `TC-DB-003` | Database URL Legacy Scheme | Verifies `postgres://` prefix converts to `postgresql://`. | `app.database.get_engine_url()` | Normalizes URL prefix | [`test_tc_db_003_get_engine_url_postgres_legacy`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L23-L26) |
 | `TC-DB-004` | Psycopg Driver Fallback (v3 -> v2) | Falls back to `postgresql+psycopg2://` when `psycopg` is missing. | `app.database.get_engine_url()` | Replaces driver with psycopg2 | [`test_tc_db_004_get_engine_url_psycopg_fallback_to_psycopg2`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L28-L32) |
 | `TC-DB-005` | Psycopg Driver Fallback (v2 -> v3) | Falls back to `postgresql+psycopg://` when `psycopg2` is missing. | `app.database.get_engine_url()` | Replaces driver with psycopg | [`test_tc_db_005_get_engine_url_psycopg2_fallback_to_psycopg`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L34-L38) |
+| `TC-DB-006` | SafeAccountType Case Resilience | Verifies enum binding & parsing handles upper/lowercase DB values. | `app.models.SafeAccountType` | Matches AccountType enum | [`test_tc_db_006_safe_account_type_case_resilience`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L40-L50) |
+| `TC-DB-007` | Null Timestamps Serialization | Serializes accounts with null created_at/updated_at safely. | `app.schemas.AccountResponse` | Graceful null serialization | [`test_tc_db_007_account_response_null_timestamps`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L52-L66) |
 
 ---
 

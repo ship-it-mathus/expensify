@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Float, Boolean, DateTime, Enum, ForeignKey
+from sqlalchemy import Column, String, Float, Boolean, DateTime, Enum, ForeignKey, types
 from sqlalchemy.orm import relationship
 from ulid import ULID
 from app.database import Base
@@ -12,6 +12,32 @@ class AccountType(str, enum.Enum):
     BANK = "bank"
     CREDIT_CARD = "credit_card"
     INVESTMENT = "investment"
+
+class SafeAccountType(types.TypeDecorator):
+    """Resilient AccountType Enum decorator supporting case-insensitive DB values across PostgreSQL and SQLite."""
+    impl = types.String
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        if isinstance(value, AccountType):
+            return value.name
+        val_str = str(value).upper()
+        if val_str in AccountType.__members__:
+            return val_str
+        return str(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        val_str = str(value).upper()
+        if val_str in AccountType.__members__:
+            return AccountType[val_str]
+        try:
+            return AccountType(str(value).lower())
+        except ValueError:
+            return AccountType.BANK
 
 class AssetClass(str, enum.Enum):
     MUTUAL_FUNDS = "mutualFunds"
@@ -43,7 +69,7 @@ class Account(Base):
     id = Column(String(26), primary_key=True, index=True, default=generate_ulid)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     name = Column(String(100), nullable=False)
-    account_type = Column(Enum(AccountType), nullable=False, default=AccountType.BANK)
+    account_type = Column(SafeAccountType, nullable=False, default=AccountType.BANK)
     balance = Column(Float, nullable=False, default=0.0)
     include_in_net_worth = Column(Boolean, nullable=False, default=True)
     asset_class = Column(String(50), nullable=True, default=None)

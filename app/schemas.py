@@ -27,8 +27,8 @@ class AccountUpdate(BaseModel):
 
 class AccountResponse(AccountBase):
     id: str
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -55,7 +55,7 @@ class CategoryResponse(CategoryBase):
     id: str
     is_default: bool
     parent_id: Optional[str] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -85,8 +85,8 @@ class TransactionUpdate(BaseModel):
 
 class TransactionResponse(TransactionBase):
     id: str
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
