@@ -331,11 +331,12 @@
     <!-- 3. SETTINGS TAB: Account Configuration & Net Worth Visibility Toggles -->
     @if (activeTab() === 'settings') {
       <div class="base-card">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
-          <div>
-            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 4px;">Account Settings</h2>
-            <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
-              Manage accounts and toggle which accounts contribute to your liquid Net Worth calculation.
+        <!-- Header -->
+        <div class="settings-header">
+          <div class="settings-header-text">
+            <h2>Account Settings</h2>
+            <p>
+              Manage accounts, filter categories, and toggle which accounts contribute to your liquid Net Worth calculation.
             </p>
           </div>
           <button class="btn-primary" (click)="openModal('account')" style="flex-shrink: 0;">
@@ -344,75 +345,179 @@
           </button>
         </div>
 
-        <div class="base-grid">
-          @for (acc of api.accounts(); track acc.id) {
-            <div style="background-color: #0f172a; padding: 20px; border-radius: 14px; border: var(--border-subtle); display: flex; flex-direction: column; gap: 12px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #1e293b; border: var(--border-subtle);">
-                    <span class="material-symbols-outlined" [style.color]="acc.account_type === 'bank' ? 'var(--accent-success)' : acc.account_type === 'investment' ? '#6366f1' : 'var(--accent-danger)'">
-                      {{ acc.account_type === 'bank' ? 'account_balance' : acc.account_type === 'investment' ? 'trending_up' : 'credit_card' }}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 style="font-size: 1rem; font-weight: 700;">{{ acc.name }}</h3>
-                    <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
-                      <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">
-                        {{ acc.account_type === 'bank' ? 'Debit / Bank' : acc.account_type === 'investment' ? 'Investment' : 'Credit Card' }}
-                      </span>
-                      @if (acc.account_type === 'investment') {
-                        <span [style.background-color]="getAssetClassBadge(acc.asset_class).color + '25'" [style.color]="getAssetClassBadge(acc.asset_class).color" style="font-size: 0.7rem; padding: 1px 7px; border-radius: 6px; font-weight: 700;">
-                          {{ getAssetClassBadge(acc.asset_class).label }}
-                        </span>
-                      }
-                    </div>
-                  </div>
+        <!-- KPI Summary Cards Strip -->
+        <div class="settings-stats-strip">
+          <div class="stat-strip-card" [class.active]="settingsAccountFilter() === 'bank'" (click)="settingsAccountFilter.set(settingsAccountFilter() === 'bank' ? 'all' : 'bank')">
+            <div class="stat-strip-icon" style="background: rgba(16, 185, 129, 0.12); color: var(--accent-success);">
+              <span class="material-symbols-outlined">account_balance</span>
+            </div>
+            <div class="stat-strip-info">
+              <span class="stat-strip-label">Bank Accounts</span>
+              <span class="stat-strip-val" style="color: var(--accent-success);">{{ totalBankAccountsBalance() | currency:'INR':'symbol':'1.0-0' }}</span>
+              <span class="stat-strip-count">{{ bankAccounts().length }} accounts</span>
+            </div>
+          </div>
+
+          <div class="stat-strip-card" [class.active]="settingsAccountFilter() === 'credit_card'" (click)="settingsAccountFilter.set(settingsAccountFilter() === 'credit_card' ? 'all' : 'credit_card')">
+            <div class="stat-strip-icon" style="background: rgba(239, 68, 68, 0.12); color: var(--accent-danger);">
+              <span class="material-symbols-outlined">credit_card</span>
+            </div>
+            <div class="stat-strip-info">
+              <span class="stat-strip-label">Credit Cards</span>
+              <span class="stat-strip-val" style="color: var(--accent-danger);">{{ totalCreditCardAccountsBalance() | currency:'INR':'symbol':'1.0-0' }}</span>
+              <span class="stat-strip-count">{{ creditCardAccounts().length }} cards</span>
+            </div>
+          </div>
+
+          <div class="stat-strip-card" [class.active]="settingsAccountFilter() === 'investment'" (click)="settingsAccountFilter.set(settingsAccountFilter() === 'investment' ? 'all' : 'investment')">
+            <div class="stat-strip-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">
+              <span class="material-symbols-outlined">trending_up</span>
+            </div>
+            <div class="stat-strip-info">
+              <span class="stat-strip-label">Investments</span>
+              <span class="stat-strip-val" style="color: #818cf8;">{{ totalInvestmentAccountsBalance() | currency:'INR':'symbol':'1.0-0' }}</span>
+              <span class="stat-strip-count">{{ investmentAccounts().length }} portfolios</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Pills & Search -->
+        <div class="settings-toolbar">
+          <div class="filter-pills">
+            <button class="filter-pill" [class.active]="settingsAccountFilter() === 'all'" (click)="settingsAccountFilter.set('all')">
+              All ({{ api.accounts().length }})
+            </button>
+            <button class="filter-pill" [class.active]="settingsAccountFilter() === 'bank'" (click)="settingsAccountFilter.set('bank')">
+              <span class="material-symbols-outlined" style="font-size: 0.95rem;">account_balance</span>
+              Bank ({{ bankAccounts().length }})
+            </button>
+            <button class="filter-pill" [class.active]="settingsAccountFilter() === 'credit_card'" (click)="settingsAccountFilter.set('credit_card')">
+              <span class="material-symbols-outlined" style="font-size: 0.95rem;">credit_card</span>
+              Cards ({{ creditCardAccounts().length }})
+            </button>
+            <button class="filter-pill" [class.active]="settingsAccountFilter() === 'investment'" (click)="settingsAccountFilter.set('investment')">
+              <span class="material-symbols-outlined" style="font-size: 0.95rem;">trending_up</span>
+              Investments ({{ investmentAccounts().length }})
+            </button>
+          </div>
+
+          <div class="search-box">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" class="search-input" placeholder="Search accounts..." [ngModel]="settingsSearchQuery()" (ngModelChange)="settingsSearchQuery.set($event)" />
+          </div>
+        </div>
+
+        <!-- Accounts List -->
+        <div class="accounts-list-container">
+          @for (acc of filteredSettingsAccounts(); track acc.id) {
+            <div class="account-item-card" [class.is-excluded]="!acc.include_in_net_worth && acc.account_type !== 'investment'">
+              <!-- Left Column: Icon & Identity -->
+              <div class="account-item-left">
+                <div class="account-type-avatar"
+                     [style.background-color]="acc.account_type === 'bank' ? 'rgba(16, 185, 129, 0.12)' : acc.account_type === 'investment' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(239, 68, 68, 0.12)'">
+                  <span class="material-symbols-outlined" style="font-size: 1.3rem;"
+                        [style.color]="acc.account_type === 'bank' ? 'var(--accent-success)' : acc.account_type === 'investment' ? '#818cf8' : 'var(--accent-danger)'">
+                    {{ acc.account_type === 'bank' ? 'account_balance' : acc.account_type === 'investment' ? 'trending_up' : 'credit_card' }}
+                  </span>
                 </div>
 
-                <button (click)="handleToggleExclusion(acc.id, acc.include_in_net_worth)" style="background: none; border: none; cursor: pointer; color: var(--text-muted);" [title]="acc.include_in_net_worth ? 'Included in Net Worth' : 'Excluded'">
-                  <span class="material-symbols-outlined">{{ acc.include_in_net_worth ? 'visibility' : 'visibility_off' }}</span>
-                </button>
+                <div class="account-details">
+                  <div class="account-name-row">
+                    <h3 class="account-name">{{ acc.name }}</h3>
+                    <span class="account-type-badge"
+                          [style.background-color]="acc.account_type === 'bank' ? 'rgba(16, 185, 129, 0.15)' : acc.account_type === 'investment' ? 'rgba(99, 102, 241, 0.18)' : 'rgba(239, 68, 68, 0.15)'"
+                          [style.color]="acc.account_type === 'bank' ? 'var(--accent-success)' : acc.account_type === 'investment' ? '#818cf8' : 'var(--accent-danger)'">
+                      {{ acc.account_type === 'bank' ? 'Bank' : acc.account_type === 'investment' ? 'Investment' : 'Card' }}
+                    </span>
+                    @if (acc.account_type === 'investment') {
+                      <span class="account-type-badge" [style.background-color]="getAssetClassBadge(acc.asset_class).color + '25'" [style.color]="getAssetClassBadge(acc.asset_class).color">
+                        {{ getAssetClassBadge(acc.asset_class).label }}
+                      </span>
+                    }
+                  </div>
+                  @if (acc.notes) {
+                    <span class="account-notes">{{ acc.notes }}</span>
+                  }
+                </div>
               </div>
 
-              <div style="font-size: 1.5rem; font-weight: 800;"
-                   [style.color]="acc.account_type === 'bank' ? 'var(--accent-success)' : acc.account_type === 'investment' ? '#6366f1' : 'var(--accent-danger)'">
-                {{ acc.balance | currency:acc.currency:'symbol':'1.2-2' }}
-              </div>
-
-              <div style="font-size: 0.78rem; color: var(--text-muted);">
+              <!-- Center Column: Net Worth Toggle Button -->
+              <div class="account-inclusion-action">
                 @if (acc.account_type === 'investment') {
-                  <span style="color: #6366f1; font-weight: 600;">📈 Asset Portfolio — tracked separately, excluded from living expenses</span>
+                  <span class="inclusion-pill-btn portfolio" title="Investment accounts are tracked in Total Portfolio Wealth, separate from liquid Net Worth">
+                    <span class="status-indicator-dot indigo"></span>
+                    Portfolio Wealth
+                  </span>
                 } @else {
-                  Status: {{ acc.include_in_net_worth ? 'Included in Net Worth' : 'Excluded from Net Worth' }}
+                  <button class="inclusion-pill-btn"
+                          [class.included]="acc.include_in_net_worth"
+                          [class.excluded]="!acc.include_in_net_worth"
+                          (click)="handleToggleExclusion(acc.id, acc.include_in_net_worth)"
+                          [title]="acc.include_in_net_worth ? 'Click to exclude from liquid Net Worth' : 'Click to include in liquid Net Worth'">
+                    <span class="status-indicator-dot" [class.green]="acc.include_in_net_worth" [class.gray]="!acc.include_in_net_worth"></span>
+                    {{ acc.include_in_net_worth ? 'In Net Worth' : 'Excluded' }}
+                  </button>
                 }
+              </div>
+
+              <!-- Right Column: Balance & Actions -->
+              <div class="account-item-right">
+                <div class="account-balance-text"
+                     [style.color]="acc.account_type === 'bank' ? 'var(--accent-success)' : acc.account_type === 'investment' ? '#818cf8' : 'var(--accent-danger)'">
+                  {{ acc.balance | currency:acc.currency:'symbol':'1.2-2' }}
+                </div>
+                <button class="account-delete-btn" (click)="handleDeleteAccount(acc.id, acc.name)" title="Delete Account">
+                  <span class="material-symbols-outlined" style="font-size: 1.15rem;">delete</span>
+                </button>
               </div>
             </div>
           } @empty {
-            <div style="text-align: center; color: var(--text-muted); padding: 32px; grid-column: 1 / -1;">
-              No accounts available.
+            <div style="text-align: center; color: var(--text-muted); padding: 40px 16px; background: #0f172a; border-radius: 14px; border: var(--border-subtle); display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <span class="material-symbols-outlined" style="font-size: 2.2rem; color: #475569;">manage_search</span>
+              <p style="font-size: 0.92rem; font-weight: 600; margin: 0;">No accounts found</p>
+              <p style="font-size: 0.8rem; color: #64748b; margin: 0;">Try adjusting your search query or filter</p>
             </div>
           }
         </div>
+      </div>
 
-        <!-- Categories Section in App Settings -->
-        <div style="margin-top: 20px; border-top: var(--border-subtle); padding-top: 24px;">
-          <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 16px;">Financial Categories</h2>
-
-          <div class="category-chips-grid">
-            @for (cat of api.categories(); track cat.id) {
-              <div class="category-chip" style="cursor: default; padding: 10px 16px;">
-                <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--accent-primary);">
-                  {{ cat.icon || (cat.category_type === 'expense' ? 'receipt' : 'attach_money') }}
-                </span>
-                <span style="font-weight: 600;">{{ cat.name }}</span>
-                <span style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; padding: 2px 8px; border-radius: 50px; margin-left: 4px;" [style.background-color]="cat.category_type === 'expense' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'" [style.color]="cat.category_type === 'expense' ? 'var(--accent-danger)' : 'var(--accent-success)'">
-                  {{ cat.category_type }}
-                </span>
-              </div>
-            } @empty {
-              <p style="color: var(--text-muted); font-size: 0.85rem;">No categories available.</p>
-            }
+      <!-- Financial Categories Section (Cleanly Separated Card) -->
+      <div class="base-card categories-container">
+        <div class="categories-header">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 4px;">Financial Categories</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">
+              Categories used for transaction auto-tagging and monthly analytics.
+            </p>
           </div>
+
+          <div class="filter-pills">
+            <button class="filter-pill" [class.active]="categoryFilter() === 'all'" (click)="categoryFilter.set('all')">
+              All ({{ api.categories().length }})
+            </button>
+            <button class="filter-pill" [class.active]="categoryFilter() === 'expense'" (click)="categoryFilter.set('expense')">
+              Expenses
+            </button>
+            <button class="filter-pill" [class.active]="categoryFilter() === 'income'" (click)="categoryFilter.set('income')">
+              Income
+            </button>
+          </div>
+        </div>
+
+        <div class="category-chips-grid">
+          @for (cat of filteredCategories(); track cat.id) {
+            <div class="category-chip" style="cursor: default; padding: 10px 16px;">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--accent-primary);">
+                {{ cat.icon || (cat.category_type === 'expense' ? 'receipt' : 'attach_money') }}
+              </span>
+              <span style="font-weight: 600;">{{ cat.name }}</span>
+              <span style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; padding: 2px 8px; border-radius: 50px; margin-left: 4px;" [style.background-color]="cat.category_type === 'expense' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'" [style.color]="cat.category_type === 'expense' ? 'var(--accent-danger)' : 'var(--accent-success)'">
+                {{ cat.category_type }}
+              </span>
+            </div>
+          } @empty {
+            <p style="color: var(--text-muted); font-size: 0.85rem;">No categories available.</p>
+          }
         </div>
       </div>
     }

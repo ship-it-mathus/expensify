@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, effect, computed } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpensifyApiService } from './services/api.service';
@@ -271,6 +271,62 @@ export class App implements OnInit {
       await this.api.updateAccount(id, { include_in_net_worth: !current });
     } catch (err) {
       console.error('Error toggling account exclusion:', err);
+    }
+  }
+
+  // Account Settings Filter & Search Signals
+  settingsAccountFilter = signal<'all' | 'bank' | 'credit_card' | 'investment'>('all');
+  settingsSearchQuery = signal<string>('');
+  categoryFilter = signal<'all' | 'expense' | 'income'>('all');
+
+  // Computed Account Lists and Totals
+  bankAccounts = computed(() => this.api.accounts().filter(a => a.account_type === AccountType.BANK));
+  creditCardAccounts = computed(() => this.api.accounts().filter(a => a.account_type === AccountType.CREDIT_CARD));
+  investmentAccounts = computed(() => this.api.accounts().filter(a => a.account_type === AccountType.INVESTMENT));
+
+  totalBankAccountsBalance = computed(() =>
+    this.bankAccounts().reduce((sum, a) => sum + (a.balance || 0), 0)
+  );
+
+  totalCreditCardAccountsBalance = computed(() =>
+    this.creditCardAccounts().reduce((sum, a) => sum + (a.balance || 0), 0)
+  );
+
+  totalInvestmentAccountsBalance = computed(() =>
+    this.investmentAccounts().reduce((sum, a) => sum + (a.balance || 0), 0)
+  );
+
+  filteredSettingsAccounts = computed(() => {
+    let list = this.api.accounts();
+    const filter = this.settingsAccountFilter();
+    if (filter !== 'all') {
+      list = list.filter(a => a.account_type === filter);
+    }
+    const query = this.settingsSearchQuery().trim().toLowerCase();
+    if (query) {
+      list = list.filter(a =>
+        a.name.toLowerCase().includes(query) ||
+        (a.notes && a.notes.toLowerCase().includes(query)) ||
+        (a.asset_class && a.asset_class.toLowerCase().includes(query))
+      );
+    }
+    return list;
+  });
+
+  filteredCategories = computed(() => {
+    const filter = this.categoryFilter();
+    if (filter === 'all') return this.api.categories();
+    return this.api.categories().filter(c => c.category_type === filter);
+  });
+
+  async handleDeleteAccount(id: string, name: string) {
+    if (confirm(`Are you sure you want to delete account "${name}"?\nAll associated transactions will also be permanently deleted.`)) {
+      try {
+        await this.api.deleteAccount(id);
+      } catch (err) {
+        console.error('Error deleting account:', err);
+        alert('Failed to delete account. Please try again.');
+      }
     }
   }
 

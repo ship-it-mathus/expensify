@@ -9,6 +9,19 @@ Format: `[PR #] — type: description | Date`
 
 ---
 
+## [PR #34] — feat: Redesigned clean Account Settings screen with KPI strip, search, filter tabs & account deletion | 2026-10-27
+
+### feat: Account Settings UI Modernization
+- `feat` `app.html` & `styles.css`: Redesigned Account Settings from a cluttered card grid into a sleek, categorized account list with:
+  - Top KPI Summary Cards strip for Bank Accounts, Credit Cards, and Investment portfolios with counts and balances.
+  - Interactive Filter Tabs: `All`, `Bank`, `Cards`, `Investments`, and real-time account name search.
+  - Modern horizontal list cards with colored account avatars, asset class tags, and clear Net Worth inclusion pill toggles (`In Net Worth` vs `Excluded`).
+  - Added dedicated **Delete Account** button with confirmation dialog.
+  - Financial Categories section cleanly separated into its own dedicated card with Expense vs. Income tab filters.
+- `feat` `app.ts`: Added signals and computed getters for category/account filtering, balances, and `handleDeleteAccount()`.
+
+---
+
 ## [PR #33] — fix: Psycopg 3 PostgreSQL enum type-cast compatibility & dialect mapping | 2026-10-27
 
 ### fix: Psycopg 3 DatatypeMismatch on Account Creation

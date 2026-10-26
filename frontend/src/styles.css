@@ -398,3 +398,403 @@ input[type="number"] {
   100% { box-shadow: 0 0 0 0   rgba(99, 102, 241, 0);     }
 }
 
+/* ==========================================================================
+   Account Settings - Clean Modern Redesign
+   ========================================================================== */
+
+/* Header Card */
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.settings-header-text h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
+}
+
+.settings-header-text p {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* KPI Summary Cards Strip */
+.settings-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.stat-strip-card {
+  background: #0f172a;
+  border: var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.stat-strip-card:hover {
+  border-color: #475569;
+}
+
+.stat-strip-card.active {
+  border-color: var(--accent-primary);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.stat-strip-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-strip-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stat-strip-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-strip-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-strip-count {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* Filter Bar & Search */
+.settings-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0 4px 0;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-pill:hover {
+  background: #1e293b;
+  color: var(--text-main);
+  border-color: #475569;
+}
+
+.filter-pill.active {
+  background: var(--accent-primary);
+  color: #ffffff;
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 220px;
+}
+
+.search-box span {
+  position: absolute;
+  left: 12px;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 20px;
+  color: var(--text-main);
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.search-input:focus {
+  border-color: var(--accent-primary);
+}
+
+/* Account Cards / List Layout */
+.accounts-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.account-item-card {
+  background: #0f172a;
+  border: var(--border-subtle);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.15s ease;
+}
+
+.account-item-card:hover {
+  border-color: #475569;
+  background: #111c34;
+}
+
+.account-item-card.is-excluded {
+  opacity: 0.72;
+  background: #090e1a;
+}
+
+/* Left: Account Identity */
+.account-item-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.account-type-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.account-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.account-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.account-name {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+
+.account-type-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.account-notes {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+/* Center: Inclusion Status Button */
+.account-inclusion-action {
+  flex-shrink: 0;
+}
+
+.inclusion-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.inclusion-pill-btn.included {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--accent-success);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.inclusion-pill-btn.included:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: var(--accent-success);
+}
+
+.inclusion-pill-btn.excluded {
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--text-muted);
+  border-color: #334155;
+}
+
+.inclusion-pill-btn.excluded:hover {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--text-main);
+  border-color: #64748b;
+}
+
+.inclusion-pill-btn.portfolio {
+  background: rgba(99, 102, 241, 0.12);
+  color: #818cf8;
+  border-color: rgba(99, 102, 241, 0.3);
+  cursor: default;
+}
+
+.status-indicator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-indicator-dot.green {
+  background-color: var(--accent-success);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+.status-indicator-dot.gray {
+  background-color: #64748b;
+}
+
+.status-indicator-dot.indigo {
+  background-color: #818cf8;
+  box-shadow: 0 0 6px rgba(99, 102, 241, 0.6);
+}
+
+/* Right: Balance & Actions */
+.account-item-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.account-balance-text {
+  font-family: var(--font-display);
+  font-size: 1.18rem;
+  font-weight: 800;
+  text-align: right;
+  letter-spacing: -0.3px;
+  min-width: 110px;
+}
+
+.account-delete-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.account-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-danger);
+}
+
+/* Category Section Card */
+.categories-container {
+  margin-top: 16px;
+}
+
+.categories-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .account-item-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .account-item-right {
+    justify-content: space-between;
+    width: 100%;
+    border-top: 1px solid #1e293b;
+    padding-top: 8px;
+  }
+
+  .account-balance-text {
+    text-align: left;
+    min-width: auto;
+  }
+}
+
