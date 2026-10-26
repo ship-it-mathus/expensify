@@ -53,11 +53,29 @@ def run_startup_migrations():
             except Exception as e:
                 print(f"[Migration] {table}.user_id notice: {e}")
 
-        # Add 'investment' enum value to PostgreSQL accounttype enum
+        # Add all enum variants to PostgreSQL accounttype enum (both upper and lowercase)
+        for val in ["INVESTMENT", "BANK", "CREDIT_CARD", "investment", "bank", "credit_card"]:
+            try:
+                conn.execution_options(isolation_level="AUTOCOMMIT").execute(
+                    text(f"ALTER TYPE accounttype ADD VALUE IF NOT EXISTS '{val}';")
+                )
+            except Exception as e:
+                print(f"[Migration] accounttype enum {val} notice: {e}")
+
+        # Normalize any lowercase enum rows to uppercase standard
         try:
-            conn.execution_options(isolation_level="AUTOCOMMIT").execute(text("ALTER TYPE accounttype ADD VALUE IF NOT EXISTS 'investment';"))
+            conn.execute(text("UPDATE accounts SET account_type = 'INVESTMENT' WHERE account_type = 'investment';"))
+            conn.commit()
         except Exception as e:
-            print(f"[Migration] accounttype enum notice: {e}")
+            print(f"[Migration] normalize account_type notice: {e}")
+
+        # Backfill any null timestamps on existing accounts
+        try:
+            conn.execute(text("UPDATE accounts SET created_at = NOW() WHERE created_at IS NULL;"))
+            conn.execute(text("UPDATE accounts SET updated_at = NOW() WHERE updated_at IS NULL;"))
+            conn.commit()
+        except Exception as e:
+            print(f"[Migration] accounts timestamps notice: {e}")
 
         # Add asset_class to accounts table
         try:

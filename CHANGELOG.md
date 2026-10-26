@@ -9,6 +9,17 @@ Format: `[PR #] — type: description | Date`
 
 ---
 
+## [PR #32] — fix: Case-resilient account type enum, null timestamp schemas & DB backfill | 2026-10-27
+
+### fix: Account Listing & Net Worth 500 Resolution
+- `fix` `models.py`: Added `SafeAccountType` TypeDecorator that normalizes uppercase/lowercase enum representations from PostgreSQL (`BANK`, `bank`, `CREDIT_CARD`, `credit_card`, `INVESTMENT`, `investment`) without raising `LookupError`.
+- `fix` `schemas.py`: Made `created_at` and `updated_at` `Optional[datetime] = None` on `AccountResponse`, `TransactionResponse`, and `CategoryResponse` to prevent Pydantic 500 validation crashes when records have NULL timestamps.
+- `fix` `main.py`: Enhanced startup migrations to add all case variants to Postgres `accounttype` enum, normalize existing lowercase rows to uppercase, and backfill null timestamps.
+- `test` `test_database.py`: Added `TC-DB-006` and `TC-DB-007` (42/42 tests passing).
+- `docs` `TESTCASES.md` & `STATUS.md`: Documented test cases and updated passing metrics.
+
+---
+
 ## [PR #31] — fix: SQLAlchemy psycopg (v3) support and connection driver fallback | 2026-10-27
 
 ### fix: Database Driver Compatibility & Render Startup
