@@ -62,6 +62,14 @@ def run_startup_migrations():
             except Exception as e:
                 print(f"[Migration] accounttype enum {val} notice: {e}")
 
+        # Ensure implicit cast from varchar to accounttype enum so drivers like Psycopg 3 can bind strings directly
+        try:
+            conn.execution_options(isolation_level="AUTOCOMMIT").execute(
+                text("CREATE CAST (varchar AS accounttype) WITH INOUT AS IMPLICIT;")
+            )
+        except Exception as e:
+            print(f"[Migration] varchar to accounttype cast notice: {e}")
+
         # Normalize any lowercase enum rows to uppercase standard
         try:
             conn.execute(text("UPDATE accounts SET account_type = 'INVESTMENT' WHERE account_type = 'investment';"))

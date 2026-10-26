@@ -1,6 +1,7 @@
 import enum
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, Float, Boolean, DateTime, Enum, ForeignKey, types
+from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 from sqlalchemy.orm import relationship
 from ulid import ULID
 from app.database import Base
@@ -17,6 +18,17 @@ class SafeAccountType(types.TypeDecorator):
     """Resilient AccountType Enum decorator supporting case-insensitive DB values across PostgreSQL and SQLite."""
     impl = types.String
     cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(
+                PG_ENUM(
+                    "BANK", "CREDIT_CARD", "INVESTMENT", "bank", "credit_card", "investment",
+                    name="accounttype",
+                    create_type=False
+                )
+            )
+        return dialect.type_descriptor(types.String())
 
     def process_bind_param(self, value, dialect):
         if value is None:
