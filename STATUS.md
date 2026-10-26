@@ -13,7 +13,7 @@
 - **GitHub Repository**: [https://github.com/ship-it-mathus/expensify](https://github.com/ship-it-mathus/expensify)
 - **Database**: Supabase PostgreSQL (Managed Cloud DB via Transaction Pooler port 6543)
 - **Auth Provider**: Supabase Auth (Email/Password; JWT verified on backend)
-- **Test Matrix**: [`TESTCASES.md`](./TESTCASES.md) (36 cataloged test cases, 36/36 passing)
+- **Test Matrix**: [`TESTCASES.md`](./TESTCASES.md) (40 cataloged test cases, 40/40 passing)
 - **Changelog**: [`CHANGELOG.md`](./CHANGELOG.md) (full PR-by-PR history)
 - **Antigravity Quality Config**: [`.antigravity/instructions.md`](./.antigravity/instructions.md)
 
