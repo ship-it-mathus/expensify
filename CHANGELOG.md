@@ -9,6 +9,14 @@ Format: `[PR #] — type: description | Date`
 
 ---
 
+## [PR #33] — fix: Psycopg 3 PostgreSQL enum type-cast compatibility & dialect mapping | 2026-10-27
+
+### fix: Psycopg 3 DatatypeMismatch on Account Creation
+- `fix` `models.py`: Added `load_dialect_impl()` to `SafeAccountType` so PostgreSQL maps directly to `PG_ENUM` with all case variants, avoiding `psycopg.errors.DatatypeMismatch` (`column "account_type" is of type accounttype but expression is of type character varying`).
+- `fix` `main.py`: Added startup migration `CREATE CAST (varchar AS accounttype) WITH INOUT AS IMPLICIT;` ensuring PostgreSQL seamlessly casts bound strings to `accounttype`.
+
+---
+
 ## [PR #32] — fix: Case-resilient account type enum, null timestamp schemas & DB backfill | 2026-10-27
 
 ### fix: Account Listing & Net Worth 500 Resolution
