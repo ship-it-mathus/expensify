@@ -9,6 +9,17 @@ Format: `[PR #] — type: description | Date`
 
 ---
 
+## [PR #31] — fix: SQLAlchemy psycopg (v3) support and connection driver fallback | 2026-10-27
+
+### fix: Database Driver Compatibility & Render Startup
+- `fix` `requirements.txt`: Added `psycopg[binary]>=3.1.18` alongside `psycopg2-binary>=2.9.9` for native Psycopg 3 support.
+- `fix` `Dockerfile`: Added `psycopg[binary]` to container pre-installation layer.
+- `fix` `database.py`: Implemented `get_engine_url()` to normalize legacy `postgres://` URLs to `postgresql://` and provide bidirectional fallback between `postgresql+psycopg://` and `postgresql+psycopg2://`.
+- `test` `test_database.py`: Added `TC-DB-003`, `TC-DB-004`, and `TC-DB-005` verifying legacy URL normalization and driver fallbacks (40/40 tests passing).
+- `docs` `TESTCASES.md`: Updated test matrix with `TC-DB-003`..`TC-DB-005`.
+
+---
+
 ## [PR #28] — feat: Investment asset allocation, cashflow time scopes & transfer accounting | 2026-10-25
 
 ### feat: Investment Asset Allocation & Multi-Tier Schema

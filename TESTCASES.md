@@ -29,8 +29,11 @@ This file catalogs every unit and integration test case implemented in the Expen
 
 | Test ID | Test Name | Description / Boundary Condition | Target Function | Expected Behavior | Implementation Link |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `TC-DB-001` | Session Lifecycle | Verifies `get_db()` generator yields clean session and closes after request. | `app.database.get_db()` | Yields SQLAlchemy Session | [`test_tc_db_001_get_db_generator`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L3-L11) |
-| `TC-DB-002` | ULID Generator Format | Verifies `generate_ulid()` yields a valid 26-character Base32 string. | `app.models.generate_ulid()` | Returns 26-char ULID String | [`test_tc_db_002_ulid_format`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L13-L19) |
+| `TC-DB-001` | Session Lifecycle | Verifies `get_db()` generator yields clean session and closes after request. | `app.database.get_db()` | Yields SQLAlchemy Session | [`test_tc_db_001_get_db_generator`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L6-L14) |
+| `TC-DB-002` | ULID Generator Format | Verifies `generate_ulid()` yields a valid 26-character Base32 string. | `app.models.generate_ulid()` | Returns 26-char ULID String | [`test_tc_db_002_ulid_format`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L16-L21) |
+| `TC-DB-003` | Database URL Legacy Scheme | Verifies `postgres://` prefix converts to `postgresql://`. | `app.database.get_engine_url()` | Normalizes URL prefix | [`test_tc_db_003_get_engine_url_postgres_legacy`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L23-L26) |
+| `TC-DB-004` | Psycopg Driver Fallback (v3 -> v2) | Falls back to `postgresql+psycopg2://` when `psycopg` is missing. | `app.database.get_engine_url()` | Replaces driver with psycopg2 | [`test_tc_db_004_get_engine_url_psycopg_fallback_to_psycopg2`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L28-L32) |
+| `TC-DB-005` | Psycopg Driver Fallback (v2 -> v3) | Falls back to `postgresql+psycopg://` when `psycopg2` is missing. | `app.database.get_engine_url()` | Replaces driver with psycopg | [`test_tc_db_005_get_engine_url_psycopg2_fallback_to_psycopg`](file:///Users/mathews/Projects/Expensify/tests/test_database.py#L34-L38) |
 
 ---
 
