@@ -9,6 +9,14 @@ Format: `[PR #] — type: description | Date`
 
 ---
 
+## [PR #35] — fix: Align Net Worth inclusion pills using rigid CSS grid columns | 2026-10-27
+
+### fix: Account Settings Pill Alignment
+- `fix` `styles.css`: Converted `.account-item-card` from dynamic flexbox to a 3-column CSS Grid (`minmax(0, 1fr) 160px 180px`), locking the inclusion pill column to a fixed horizontal position.
+- `fix` `styles.css`: Standardized `.inclusion-pill-btn` width to `145px` with centered content and fixed text truncation for long account names, ensuring uniform vertical alignment across all cards regardless of name length.
+
+---
+
 ## [PR #34] — feat: Redesigned clean Account Settings screen with KPI strip, search, filter tabs & account deletion | 2026-10-27
 
 ### feat: Account Settings UI Modernization

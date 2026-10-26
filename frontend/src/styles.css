@@ -579,9 +579,9 @@ input[type="number"] {
   background: #0f172a;
   border: var(--border-subtle);
   border-radius: 14px;
-  padding: 14px 18px;
-  display: flex;
-  justify-content: space-between;
+  padding: 14px 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px 180px;
   align-items: center;
   gap: 16px;
   transition: all 0.15s ease;
@@ -603,6 +603,7 @@ input[type="number"] {
   align-items: center;
   gap: 14px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .account-type-avatar {
@@ -621,6 +622,7 @@ input[type="number"] {
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .account-name-row {
@@ -636,6 +638,9 @@ input[type="number"] {
   color: var(--text-main);
   letter-spacing: -0.2px;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .account-type-badge {
@@ -645,6 +650,7 @@ input[type="number"] {
   border-radius: 6px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  flex-shrink: 0;
 }
 
 .account-notes {
@@ -653,19 +659,23 @@ input[type="number"] {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 320px;
 }
 
-/* Center: Inclusion Status Button */
+/* Center: Fixed-column Inclusion Status Pill */
 .account-inclusion-action {
-  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .inclusion-pill-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 5px 12px;
+  width: 145px;
+  padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -673,6 +683,7 @@ input[type="number"] {
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .inclusion-pill-btn.included {
@@ -710,6 +721,7 @@ input[type="number"] {
   height: 7px;
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .status-indicator-dot.green {
@@ -730,8 +742,9 @@ input[type="number"] {
 .account-item-right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 14px;
-  flex-shrink: 0;
+  width: 100%;
 }
 
 .account-balance-text {
@@ -740,7 +753,7 @@ input[type="number"] {
   font-weight: 800;
   text-align: right;
   letter-spacing: -0.3px;
-  min-width: 110px;
+  white-space: nowrap;
 }
 
 .account-delete-btn {
@@ -755,6 +768,7 @@ input[type="number"] {
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .account-delete-btn:hover {
@@ -777,24 +791,32 @@ input[type="number"] {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 860px) {
   .account-item-card {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
-    padding: 12px 14px;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .account-inclusion-action {
+    width: auto;
+  }
+
+  .inclusion-pill-btn {
+    width: auto;
   }
 
   .account-item-right {
     justify-content: space-between;
     width: 100%;
     border-top: 1px solid #1e293b;
-    padding-top: 8px;
+    padding-top: 10px;
   }
 
   .account-balance-text {
     text-align: left;
-    min-width: auto;
   }
 }
 
